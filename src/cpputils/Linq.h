@@ -14,10 +14,10 @@
 #ifdef LINQ_DEBUG
     #include "Misc.h"
     #define LINQ_TYPE_NAME()    utl::TypeHelper<decltype(*this)>::name()
-    #define LINQ_CTOR()         do { std::cout << LINQ_TYPE_NAME() << "::ctor(this=" << this << ")" << std::endl; } while(0)
-    #define LINQ_COPY_CTOR()    do { std::cout << LINQ_TYPE_NAME() << "::copy(this=" << this << ")" << std::endl; } while(0)
-    #define LINQ_MOVE_CTOR()    do { std::cout << LINQ_TYPE_NAME() << "::move(this=" << this << ")" << std::endl; } while(0)
-    #define LINQ_DTOR()         do { std::cout << LINQ_TYPE_NAME() << "::dtor(this=" << this << ")" << std::endl; } while(0)
+    #define LINQ_CTOR()         do { std::cout << "CTOR(this=" << this << ")" << LINQ_TYPE_NAME() << std::endl; } while(0)
+    #define LINQ_COPY_CTOR()    do { std::cout << "COPY(this=" << this << ")" << LINQ_TYPE_NAME() << std::endl; } while(0)
+    #define LINQ_MOVE_CTOR()    do { std::cout << "MOVE(this=" << this << ")" << LINQ_TYPE_NAME() << std::endl; } while(0)
+    #define LINQ_DTOR()         do { std::cout << "DTOR(this=" << this << ")" << LINQ_TYPE_NAME() << std::endl; } while(0)
 #else
     #define LINQ_TYPE_NAME()    while(0)
     #define LINQ_CTOR()         while(0)
@@ -25,9 +25,6 @@
     #define LINQ_MOVE_CTOR()    while(0)
     #define LINQ_DTOR()         while(0)
 #endif
-
-template<class T>
-struct Fuu { };
 
 namespace linq
 {
@@ -49,107 +46,18 @@ namespace linq
         };
 
         template<class T>
-        struct __impl_mp_range_value_type
-        {
-            using clean_range_type  = typename std::remove_reference<T>::type;
-            using type              = typename clean_range_type::value_type;
-        };
-
-        template<class T>
-        using mp_range_value_type = typename __impl_mp_range_value_type<T>::type;
+        using mp_range_value_type = typename utl::mp_remove_ref<T>::value_type;
 
         /* helper types **************************************************************************/
         template<class T>
-        using mp_set_value_type = utl::mp_if<
-                                    std::is_reference<T>,
-                                    utl::mp_remove_ref<T>*,
-                                    T>;
-
-        template<class T, class TPredicate>
-        struct op_less
-        {
-            using predicate_type = TPredicate;
-            using set_value_type = mp_set_value_type<T>;
-
-            predicate_type predicate;
-
-            template<class X = T>
-            inline utl::mp_enable_if_c<!std::is_reference<X>::value, bool>
-            operator()(const set_value_type& l, const set_value_type& r)
-                { return predicate(l, r); }
-
-            template<class X = T>
-            inline utl::mp_enable_if_c<std::is_reference<X>::value, bool>
-            operator()(const set_value_type& l, const set_value_type& r)
-                { return predicate(*l, *r); }
-
-            op_less(const predicate_type& lp) :
-                predicate(lp)
-                { }
-
-            op_less(const op_less& other) :
-                predicate(other.predicate)
-                { }
-
-            op_less(op_less&& other) :
-                predicate(std::move(other).predicate)
-                { }
-        };
-
-        template<class T, class TLessPredicate>
-        struct ref_set : public std::set<mp_set_value_type<T>, op_less<T, TLessPredicate>>
-        {
-            using less_predicate_type   = TLessPredicate;
-            using value_type            = T;
-            using this_type             = ref_set<value_type, less_predicate_type>;
-            using op_less_type          = op_less<value_type, less_predicate_type>;
-            using set_value_type        = mp_set_value_type<value_type>;
-            using base_type             = std::set<set_value_type, op_less_type>;
-
-            template<class X = value_type>
-            inline utl::mp_enable_if_c<std::is_reference<X>::value, bool>
-            storeImpl(X x)
-                { return this->insert(&x).second;  }
-
-            template<class X = value_type>
-            inline utl::mp_enable_if_c<!std::is_reference<X>::value, bool>
-            storeImpl(X x)
-                { return this->insert(x).second; }
-
-            inline bool store(value_type value)
-                { return storeImpl<value_type>(value); }
-
-            ref_set(less_predicate_type&& lp) :
-                base_type::set(op_less_type(std::forward<less_predicate_type>(lp)))
-                { }
-
-            ref_set(const this_type& other) :
-                base_type::set(other)
-                { }
-
-            ref_set(this_type&& other) :
-                base_type::set(std::move(other))
-                { }
-        };
-
-        template<class T>
         struct wrapper
         {
-            T value;
+            using value_type = T;
 
-            inline bool operator == (const wrapper& other) const { return value == other.value; }
-            inline bool operator != (const wrapper& other) const { return value != other.value; }
-            inline bool operator <= (const wrapper& other) const { return value <= other.value; }
-            inline bool operator >= (const wrapper& other) const { return value >= other.value; }
-            inline bool operator <  (const wrapper& other) const { std::cout << value << " < " << other.value << " ? " << (value < other.value) << std::endl; return value <  other.value; }
-            inline bool operator >  (const wrapper& other) const { return value >  other.value; }
+            value_type value;
 
-            inline bool operator == (T&& t) const { return value == t; }
-            inline bool operator != (T&& t) const { return value != t; }
-            inline bool operator <= (T&& t) const { return value <= t; }
-            inline bool operator >= (T&& t) const { return value >= t; }
-            inline bool operator <  (T&& t) const { return value <  t; }
-            inline bool operator >  (T&& t) const { return value >  t; }
+            inline value_type operator*() const
+                { return value; }
 
             inline wrapper& operator=(const wrapper& other)
             {
@@ -163,20 +71,119 @@ namespace linq
                 return *this;
             }
 
-            inline wrapper(T v) :
+            template<class X>
+            inline wrapper(X&& v) :
+                value(std::forward<X>(v))
+                { }
+
+            inline wrapper(const value_type& v) :
                 value(v)
-                { LINQ_CTOR(); }
+                { }
 
             inline wrapper(const wrapper& other) :
                 value(other.value)
-                { LINQ_COPY_CTOR(); }
+                { }
 
             inline wrapper(wrapper&& other) :
-                value(std::move(other).value)
-                { LINQ_MOVE_CTOR(); }
+                value(std::move(other.value))
+                { }
+        };
 
-            inline ~wrapper()
-                { LINQ_DTOR(); }
+        template<class T>
+        struct wrapper<T&>
+        {
+            using value_type   = T&;
+            using storage_type = T*;
+
+            storage_type value;
+
+            inline value_type operator*() const
+                { return *value; }
+
+            inline wrapper& operator=(const wrapper& other)
+            {
+                value = other.value;
+                return *this;
+            }
+
+            inline wrapper& operator=(wrapper&& other)
+            {
+                value = std::move(other.value);
+                return *this;
+            }
+
+            inline wrapper(value_type v) :
+                value(&v)
+                { }
+
+            inline wrapper(const wrapper& other) :
+                value(other.value)
+                { }
+
+            inline wrapper(wrapper&& other) :
+                value(std::move(other.value))
+                { }
+        };
+
+        template<class T, class TPredicate>
+        struct op_wrapper_less
+        {
+            using predicate_type    = TPredicate;
+            using value_type        = wrapper<T>;
+
+            predicate_type predicate;
+
+            inline bool operator()(const value_type& l, const value_type& r)
+                { return predicate(*l, *r); }
+
+            inline op_wrapper_less(const predicate_type& lp) :
+                predicate(lp)
+                { }
+
+            inline op_wrapper_less(const op_wrapper_less& other) :
+                predicate(other.predicate)
+                { }
+
+            inline op_wrapper_less(op_wrapper_less&& other) :
+                predicate(std::move(other.predicate))
+                { }
+        };
+
+        template<class TRange>
+        struct range_wrapper
+        {
+            using range_type = TRange;
+            using this_type  = range_wrapper<range_type>;
+            using value_type = mp_range_value_type<range_type>;
+
+            range_type range;
+
+            inline value_type& front()
+                { return range.front(); }
+
+            inline bool next()
+                { return range.next(); }
+
+            template<class TBuilder>
+            inline auto operator >> (TBuilder&& builder) &
+                { return builder.build(range); }
+
+            template<class TBuilder>
+            inline auto operator >> (TBuilder&& builder) &&
+                { return builder.build(std::move(range)); }
+
+            template<class... Args>
+            range_wrapper(Args&&... args) :
+                range(std::forward<Args>(args)...)
+                { }
+
+            range_wrapper(const this_type& other) :
+                range(other.range)
+                { }
+
+            range_wrapper(this_type&& other) :
+                range(std::move(other.range))
+                { }
         };
 
         template<class TKey, class TValue>
@@ -192,10 +199,23 @@ namespace linq
             using keys_value_type       = std::pair<wrapped_key_type, size_t>;
             using keys_type             = std::vector<keys_value_type>;
             using values_type           = std::vector<wrapped_value_type>;
+            using range_indices_type    = std::pair<size_t, size_t>;
+
+        private:
+            struct lookup_range;
+            struct lookup_key_value_range;
+
+            using lookup_range_wrapper           = range_wrapper<lookup_range>;
+            using lookup_key_value_range_wrapper = range_wrapper<lookup_key_value_range>;
 
         public:
+            using range_type = lookup_key_value_range_wrapper;
+
+        private:
             struct lookup_range : public tag_range
             {
+                using value_type = lookup::value_type;
+
                 enum class State
                 {
                     Initialize,
@@ -208,11 +228,11 @@ namespace linq
                 size_t              end;
                 State               state;
 
-                inline value_type front()
+                inline value_type& front()
                 {
                     assert(state == State::Iterating);
                     assert(current < end);
-                    return values[current].value;
+                    return *values[current];
                 }
 
                 inline bool next()
@@ -238,30 +258,97 @@ namespace linq
                     }
                 }
 
-                template<class TBuilder>
-                inline auto operator >> (TBuilder&& builder)
-                    { return builder.build(*this); }
-
-                lookup_range(const values_type& v, size_t c, size_t e) :
+                inline lookup_range(const values_type& v, size_t c, size_t e) :
                     values  (v),
                     current (c),
                     end     (e),
                     state   (State::Initialize)
-                    { }
+                    { LINQ_CTOR(); }
 
-                lookup_range(const lookup_range& other) :
+                inline lookup_range(const lookup_range& other) :
                     values  (other.values),
                     current (other.current),
                     end     (other.end),
                     state   (other.state)
-                    { }
+                    { LINQ_COPY_CTOR(); }
 
-                lookup_range(lookup_range&& other) :
-                    values  (std::move(other).values),
-                    current (std::move(other).current),
-                    end     (std::move(other).end),
-                    state   (std::move(other).state)
-                    { }
+                inline lookup_range(lookup_range&& other) :
+                    values  (std::move(other.values)),
+                    current (std::move(other.current)),
+                    end     (std::move(other.end)),
+                    state   (std::move(other.state))
+                    { LINQ_MOVE_CTOR(); }
+
+                inline ~lookup_range()
+                    { LINQ_DTOR(); }
+            };
+
+            struct lookup_key_value_range : public tag_range
+            {
+                using value_type    = std::pair<key_type, lookup_range_wrapper>;
+                using iterator_type = typename keys_type::const_iterator;
+
+                lookup              container;
+                bool                initialized;
+                range_indices_type  range_indices;
+                iterator_type       current;
+                iterator_type       end;
+
+                inline value_type front()
+                {
+                    assert(initialized);
+                    assert(current != end);
+                    return value_type(
+                        *current->first,
+                        std::move(container.createRange(range_indices)));
+                }
+
+                inline bool next()
+                {
+                    if (!initialized)
+                    {
+                        initialized = true;
+                        current     = container._keys.begin();
+                        end         = container._keys.end();
+                        if (current == end)
+                            return false;
+                    }
+                    else
+                    {
+                        if (current == end)
+                            return false;
+                        ++current;
+                        if (current == end)
+                            return false;
+                    }
+                    range_indices = container.findKey(*current->first);
+                    return true;
+                }
+
+                template<class C>
+                lookup_key_value_range(C&& c) :
+                    container   (std::forward<C>(c)),
+                    initialized (false)
+                    { LINQ_CTOR(); }
+
+                lookup_key_value_range(const lookup_key_value_range& other) :
+                    container       (other.container),
+                    initialized     (other.initialized),
+                    range_indices   (other.range_indices),
+                    current         (other.current),
+                    end             (other.end)
+                    { LINQ_COPY_CTOR(); }
+
+                lookup_key_value_range(lookup_key_value_range&& other) :
+                    container       (std::move(other).container),
+                    initialized     (std::move(other).initialized),
+                    range_indices   (std::move(other).range_indices),
+                    current         (std::move(other).current),
+                    end             (std::move(other).end)
+                    { LINQ_MOVE_CTOR(); }
+
+                ~lookup_key_value_range()
+                    { LINQ_DTOR(); }
             };
 
             struct op_compare_keys
@@ -269,18 +356,17 @@ namespace linq
                 bool operator()(
                     const keys_value_type& l,
                     const keys_value_type& r)
-                    { return l.first < r.first; }
+                    { return *l.first < *r.first; }
             };
 
         private:
             keys_type   _keys;
             values_type _values;
 
-        public:
-            lookup_range operator[](const clean_key_type& key)
+            inline range_indices_type findKey(const clean_key_type& key)
             {
                 if (_values.empty())
-                    return lookup_range(_values, 0, 0);
+                    return std::make_pair<size_t, size_t>(0, 0);
 
                 auto it = std::lower_bound(
                             _keys.begin(),
@@ -288,38 +374,59 @@ namespace linq
                             typename keys_type::value_type (const_cast<clean_key_type&>(key), 0),
                             op_compare_keys());
                 if (    it == _keys.end()
-                    ||  it->first != const_cast<clean_key_type&>(key))
-                    return lookup_range(_values, 0, 0);
+                    || *it->first != const_cast<clean_key_type&>(key))
+                    return std::make_pair<size_t, size_t>(0, 0);
 
                 auto next = it + 1;
-                return next == _keys.end()
-                    ? lookup_range(_values, it->second, _values.size())
-                    : lookup_range(_values, it->second, next->second);
+                range_indices_type ret;
+                ret.first  = it->second;
+                ret.second = next == _keys.end()
+                    ? _values.size()
+                    : next->second;
+                return ret;
             }
 
-        private:
-            lookup(keys_type&& k, values_type&& v) :
-                _keys   (k),
-                _values (v)
-                { }
+            inline lookup_range_wrapper createRange(const range_indices_type& indices)
+                { return lookup_range_wrapper(_values, indices.first, indices.second); }
 
         public:
-            lookup()
-                { }
+            inline lookup_range_wrapper operator[](const clean_key_type& key)
+                { return createRange(findKey(key)); }
 
-            lookup(const lookup& other) :
+            template<class TBuilder>
+            inline auto operator >> (TBuilder&& builder) &
+                { return builder.build(std::move(lookup_key_value_range(*this))); }
+
+            template<class TBuilder>
+            inline auto operator >> (TBuilder&& builder) &&
+                { return builder.build(std::move(lookup_key_value_range(std::move(*this)))); }
+
+        private:
+            inline lookup(keys_type&& k, values_type&& v) :
+                _keys   (k),
+                _values (v)
+                { LINQ_CTOR(); }
+
+        public:
+            inline lookup()
+                { LINQ_CTOR(); }
+
+            inline lookup(const lookup& other) :
                 _keys   (other._keys),
                 _values (other._values)
-                { }
+                { LINQ_COPY_CTOR(); }
 
-            lookup(lookup&& other) :
+            inline lookup(lookup&& other) :
                 _keys   (std::move(other)._keys),
                 _values (std::move(other)._values)
-                { }
+                { LINQ_MOVE_CTOR(); }
+
+            inline ~lookup()
+                { LINQ_DTOR(); }
 
         public:
             template<class TRange, class TKeyPredicate, class TValuePredicate>
-            static auto build(TRange& range, TKeyPredicate& kp, TValuePredicate& vp)
+            static inline auto build(TRange& range, TKeyPredicate& kp, TValuePredicate& vp)
             {
                 keys_type   k;
                 values_type v;
@@ -335,8 +442,6 @@ namespace linq
                     return lookup();
 
                 std::sort(k.begin(), k.end(), op_compare_keys());
-                for (auto& tmp : k)
-                    std::cout << tmp.first.value << "-" << tmp.second << std::endl;
 
                 keys_type keys;
                 values_type values;
@@ -360,7 +465,7 @@ namespace linq
                 while (it != end)
                 {
                     values.push_back(v.at(it->second));
-                    if (prev->first.value < it->first.value)
+                    if (*prev->first < *it->first)
                         keys.push_back(std::make_pair(it->first, index));
                     prev = it;
                     ++it;
@@ -383,7 +488,7 @@ namespace linq
             iterator_type   current;
             iterator_type   end;
 
-            inline value_type front()
+            inline value_type& front()
             {
                 assert(initialized);
                 assert(current != end);
@@ -399,31 +504,30 @@ namespace linq
                 return (current != end);
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            iterator_range(iterator_type beg, iterator_type end) :
+            inline iterator_range(iterator_type beg, iterator_type end) :
                 initialized (false),
                 current     (beg),
                 end         (end)
                 { LINQ_CTOR(); }
 
-            iterator_range(const this_type& other) :
+            inline iterator_range(const this_type& other) :
                 initialized (other.initialized),
                 current     (other.current),
                 end         (other.end)
                 { LINQ_COPY_CTOR(); }
 
-            iterator_range(this_type&& other) :
+            inline iterator_range(this_type&& other) :
                 initialized (std::move(other).initialized),
                 current     (std::move(other).current),
                 end         (std::move(other).end)
                 { LINQ_MOVE_CTOR(); }
 
-            ~iterator_range()
+            inline ~iterator_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TIterator>
+        using iterator_range_wrapper = range_wrapper<iterator_range<TIterator>>;
 
         template<class TContainer>
         struct container_range : public tag_range
@@ -437,7 +541,7 @@ namespace linq
             bool            initialized;
             iterator_type   current;
 
-            inline value_type front()
+            inline value_type& front()
             {
                 assert(initialized);
                 assert(current != std::end(container));
@@ -458,30 +562,29 @@ namespace linq
                 return (current != std::end(container));
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            container_range(container_type& c) noexcept :
+            inline container_range(container_type& c) noexcept :
                 container   (c),
                 initialized (false)
                 { LINQ_CTOR(); }
 
-            container_range(const this_type& other) noexcept :
+            inline container_range(const this_type& other) noexcept :
                 container   (other.container),
                 initialized (other.initialized),
                 current     (other.current)
                 { LINQ_COPY_CTOR(); }
 
-            container_range(this_type&& other) noexcept :
+            inline container_range(this_type&& other) noexcept :
                 container   (std::move(other).container),
                 initialized (std::move(other).initialized),
                 current     (std::move(other).current)
                 { LINQ_MOVE_CTOR(); }
 
-            ~container_range()
+            inline ~container_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TContainer>
+        using container_range_wrapper = range_wrapper<container_range<TContainer>>;
 
         template<class TPredicate>
         struct generator_range : public tag_range
@@ -494,7 +597,7 @@ namespace linq
             predicate_type          predicate;
             predicate_value_type    value;
 
-            inline value_type front()
+            inline value_type& front()
             {
                 assert(static_cast<bool>(value));
                 return *value;
@@ -506,27 +609,26 @@ namespace linq
                 return static_cast<bool>(value);
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            generator_range(predicate_type p) :
+            inline generator_range(predicate_type p) :
                 predicate   (p)
                 { LINQ_CTOR(); }
 
-            generator_range(const this_type& other) :
+            inline generator_range(const this_type& other) :
                 predicate   (other.predicate),
                 value       (other.value)
                 { LINQ_COPY_CTOR(); }
 
-            generator_range(this_type&& other) :
+            inline generator_range(this_type&& other) :
                 predicate   (std::move(other).predicate),
                 value       (std::move(other).value)
                 { LINQ_MOVE_CTOR(); }
 
-            ~generator_range()
+            inline ~generator_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TPredicate>
+        using generator_range_wrapper = range_wrapper<generator_range<TPredicate>>;
 
         template<class TRange, class TPredicate>
         struct where_range : public tag_range
@@ -539,7 +641,7 @@ namespace linq
             range_type      range;
             predicate_type  predicate;
 
-            inline value_type front()
+            inline value_type& front()
                 { return range.front(); }
 
             inline bool next()
@@ -552,28 +654,28 @@ namespace linq
                 return false;
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            where_range(const range_type& r, const predicate_type& p) :
-                range       (r),
-                predicate   (p)
+            template<class R, class P>
+            inline where_range(R&& r, P&& p) :
+                range       (std::forward<R>(r)),
+                predicate   (std::forward<P>(p))
                 { LINQ_CTOR(); }
 
-            where_range(const this_type& other) :
+            inline where_range(const this_type& other) :
                 range       (other.range),
                 predicate   (other.predicate)
                 { LINQ_COPY_CTOR(); }
 
-            where_range(this_type&& other) :
+            inline where_range(this_type&& other) :
                 range       (std::move(other).range),
                 predicate   (std::move(other).predicate)
                 { LINQ_MOVE_CTOR(); }
 
-            ~where_range()
+            inline ~where_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TRange, class TPredicate>
+        using where_range_wrapper = range_wrapper<where_range<TRange, TPredicate>>;
 
         template<class TRange, class TPredicate>
         struct select_range : public tag_range
@@ -589,7 +691,7 @@ namespace linq
             range_type      range;
             cache_type      cache;
 
-            inline value_type front()
+            inline value_type& front()
             {
                 assert(static_cast<bool>(cache));
                 return *cache;
@@ -606,28 +708,28 @@ namespace linq
                 return false;
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            select_range(const range_type& r, const predicate_type& p) :
-                range       (r),
-                predicate   (p)
+            template<class R, class P>
+            inline select_range(R&& r, P&& p) :
+                range       (std::forward<R>(r)),
+                predicate   (std::forward<P>(p))
                 { LINQ_CTOR(); }
 
-            select_range(const this_type& other) :
+            inline select_range(const this_type& other) :
                 range       (other.range),
                 predicate   (other.predicate)
                 { LINQ_COPY_CTOR(); }
 
-            select_range(this_type&& other) :
+            inline select_range(this_type&& other) :
                 range       (std::move(other).range),
                 predicate   (std::move(other).predicate)
                 { LINQ_MOVE_CTOR(); }
 
-            ~select_range()
+            inline ~select_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TRange, class TPredicate>
+        using select_range_wrapper = range_wrapper<select_range<TRange, TPredicate>>;
 
         template<class TRange, class TPredicate>
         struct select_many_range : public tag_range
@@ -668,7 +770,7 @@ namespace linq
             build_inner_range(T value)
                 { inner_range = inner_range_type(std::begin(value), std::end(value)); }
 
-            inline value_type front()
+            inline value_type& front()
             {
                 assert(inner_range);
                 return inner_range->front();
@@ -689,30 +791,30 @@ namespace linq
                 return false;
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            select_many_range(const range_type& r, const predicate_type& p) :
-                range       (r),
-                predicate   (p)
+            template<class R, class P>
+            inline select_many_range(R&& r, P&& p) :
+                range       (std::forward<R>(r)),
+                predicate   (std::forward<P>(p))
                 { LINQ_CTOR(); }
 
-            select_many_range(const this_type& other) :
+            inline select_many_range(const this_type& other) :
                 range       (other.range),
                 predicate   (other.predicate),
                 inner_range (other.inner_range)
                 { LINQ_COPY_CTOR(); }
 
-            select_many_range(this_type&& other) :
+            inline select_many_range(this_type&& other) :
                 range       (std::move(other).range),
                 predicate   (std::move(other).predicate),
                 inner_range (std::move(other).inner_range)
                 { LINQ_MOVE_CTOR(); }
 
-            ~select_many_range()
+            inline ~select_many_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TRange, class TPredicate>
+        using select_many_range_wrapper = range_wrapper<select_many_range<TRange, TPredicate>>;
 
         template<class TRange, class TSelectPredicate, class TLessPredicate>
         struct order_by_range : public tag_range
@@ -790,7 +892,7 @@ namespace linq
                     });
             }
 
-            inline value_type front()
+            inline value_type& front()
                 { return front_impl<value_type>(); }
 
             inline bool next()
@@ -814,34 +916,34 @@ namespace linq
                 return (current < static_cast<ssize_t>(values.size()));
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            order_by_range(const range_type& r, const select_predicate_type& sp, const less_predicate_type& lp) :
-                range           (r),
-                select_predicate(sp),
-                less_predicate  (lp),
+            template<class R, class SP, class LP>
+            inline order_by_range(R&& r, SP&& sp, LP&& lp) :
+                range           (std::forward<R>(r)),
+                select_predicate(std::forward<SP>(sp)),
+                less_predicate  (std::forward<LP>(lp)),
                 current         (-1)
                 { LINQ_CTOR(); }
 
-            order_by_range(const this_type& other) :
+            inline order_by_range(const this_type& other) :
                 range           (other.range),
                 select_predicate(other.select_predicate),
                 less_predicate  (other.less_predicate),
                 current         (other.current)
                 { LINQ_COPY_CTOR(); }
 
-            order_by_range(this_type&& other) :
+            inline order_by_range(this_type&& other) :
                 range           (std::move(other).range),
                 select_predicate(std::move(other).select_predicate),
                 less_predicate  (std::move(other).less_predicate),
                 current         (std::move(other).current)
                 { LINQ_MOVE_CTOR(); }
 
-            ~order_by_range()
+            inline ~order_by_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TRange, class TSelectPredicate, class TLessPredicate>
+        using order_by_range_wrapper = range_wrapper<order_by_range<TRange, TSelectPredicate, TLessPredicate>>;
 
         template<class TRange, class TLessPredicate>
         struct distinct_range : public tag_range
@@ -850,46 +952,48 @@ namespace linq
             using less_predicate_type   = TLessPredicate;
             using this_type             = distinct_range<range_type, less_predicate_type>;
             using value_type            = mp_range_value_type<range_type>;
-            using set_type              = ref_set<value_type, less_predicate_type>;
+            using set_value_type        = wrapper<value_type>;
+            using set_less_type         = op_wrapper_less<value_type, less_predicate_type>;
+            using set_type              = std::set<set_value_type, set_less_type>;
 
             range_type  range;
             set_type    set;
 
-            inline value_type front()
+            inline value_type& front()
                 { return range.front(); }
 
             inline bool next()
             {
                 while(range.next())
                 {
-                    if (set.store(range.front()))
+                    if (set.emplace(range.front()).second)
                         return true;
                 }
                 return false;
             }
 
-            template<class TBuilder>
-            inline auto operator >> (TBuilder&& builder)
-                { return builder.build(*this); }
-
-            distinct_range(const range_type& r, less_predicate_type&& lp) :
-                range   (r),
-                set     (std::forward<less_predicate_type>(lp))
+            template<class R, class LP>
+            inline distinct_range(R&& r, LP&& lp) :
+                range   (std::forward<R>(r)),
+                set     (std::forward<LP>(lp))
                 { LINQ_CTOR(); }
 
-            distinct_range(const this_type& other) :
+            inline distinct_range(const this_type& other) :
                 range   (other.range),
                 set     (other.set)
                 { LINQ_COPY_CTOR(); }
 
-            distinct_range(this_type&& other) :
+            inline distinct_range(this_type&& other) :
                 range   (std::move(other).range),
                 set     (std::move(other).set)
                 { LINQ_MOVE_CTOR(); }
 
-            ~distinct_range()
+            inline ~distinct_range()
                 { LINQ_DTOR(); }
         };
+
+        template<class TRange, class TLessPredicate>
+        using distinct_range_wrapper = range_wrapper<distinct_range<TRange, TLessPredicate>>;
 
         /* builder *******************************************************************************/
         template<template<class> class TOuterRange>
@@ -904,18 +1008,18 @@ namespace linq
             {
                 // CAUTION: we want no reference to a range here, because the passed range may be destroyed before used in outer_range_type
                 using range_type = utl::mp_remove_ref<TRange>;
-                return outer_range_type<range_type>(std::forward<range_type>(range));
+                return outer_range_type<range_type>(std::forward<TRange>(range));
             }
 
-            builder()
+            inline builder()
                 { LINQ_CTOR(); }
 
-            builder(this_type&& other)
+            inline builder(this_type&& other)
                 { LINQ_MOVE_CTOR(); }
 
-            builder(const this_type&) = delete;
+            inline builder(const this_type&) = delete;
 
-            ~builder()
+            inline ~builder()
                 { LINQ_DTOR(); }
         };
 
@@ -934,20 +1038,20 @@ namespace linq
             {
                 // CAUTION: we want no reference to a range here, because the passed range may be destroyed before used in outer_range_type
                 using range_type = utl::mp_remove_ref<TRange>;
-                return outer_range_type<range_type, predicate_type>(std::forward<range_type>(range), std::move(predicate));
+                return outer_range_type<range_type, predicate_type>(std::forward<TRange>(range), std::move(predicate));
             }
 
-            predicate_builder(const predicate_type& p) :
+            inline predicate_builder(const predicate_type& p) :
                 predicate(p)
                 { LINQ_CTOR(); }
 
-            predicate_builder(this_type&& other) :
+            inline predicate_builder(this_type&& other) :
                 predicate(std::move(other).predicate)
                 { LINQ_MOVE_CTOR(); }
 
-            predicate_builder(const this_type&) = delete;
+            inline predicate_builder(const this_type&) = delete;
 
-            ~predicate_builder()
+            inline ~predicate_builder()
                 { LINQ_DTOR(); }
         };
 
@@ -971,26 +1075,26 @@ namespace linq
                 return outer_range_type<range_type, predicate_0_type, predicate_1_type>(std::forward<range_type>(range), std::move(predicate0), std::move(predicate1));
             }
 
-            dual_predicate_builder(const predicate_0_type& p0, const predicate_1_type& p1) :
+            inline dual_predicate_builder(const predicate_0_type& p0, const predicate_1_type& p1) :
                 predicate0(p0),
                 predicate1(p1)
                 { LINQ_CTOR(); }
 
-            dual_predicate_builder(this_type&& other) :
+            inline dual_predicate_builder(this_type&& other) :
                 predicate0(std::move(other).predicate0),
                 predicate1(std::move(other).predicate1)
                 { LINQ_MOVE_CTOR(); }
 
-            dual_predicate_builder(const this_type&) = delete;
+            inline dual_predicate_builder(const this_type&) = delete;
 
-            ~dual_predicate_builder()
+            inline ~dual_predicate_builder()
                 { LINQ_DTOR(); }
         };
 
         struct count_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 size_t ret = 0;
                 while (range.next())
@@ -1002,7 +1106,7 @@ namespace linq
         struct sum_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using value_type  = mp_range_value_type<TRange>;
                 using return_type = utl::mp_clean_type<value_type>;
@@ -1017,7 +1121,7 @@ namespace linq
         struct min_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using value_type  = mp_range_value_type<TRange>;
                 using return_type = utl::mp_clean_type<value_type>;
@@ -1035,7 +1139,7 @@ namespace linq
         struct max_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using value_type  = mp_range_value_type<TRange>;
                 using return_type = utl::mp_clean_type<value_type>;
@@ -1053,7 +1157,7 @@ namespace linq
         struct any_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
                 { return range.next(); }
         };
 
@@ -1068,7 +1172,7 @@ namespace linq
             predicate_type  predicate;
 
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 while(range.next())
                 {
@@ -1078,7 +1182,7 @@ namespace linq
                 return false;
             }
 
-            contains_builder(comperator_type&& c, predicate_type&& p) :
+            inline contains_builder(comperator_type&& c, predicate_type&& p) :
                 comperator(c),
                 predicate (p)
                 { }
@@ -1087,11 +1191,11 @@ namespace linq
         struct single_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 if (!range.next())
                     throw utl::Exception("range is empty");
-                auto ret = range.front();
+                auto ret = std::move(range.front());
                 if (range.next())
                     throw utl::Exception("range contains more than one value");
                 return ret;
@@ -1101,13 +1205,13 @@ namespace linq
         struct single_or_default_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
                 using value_type       = utl::mp_remove_ref<range_value_type>;
                 if (!range.next())
                     return value_type();
-                auto ret = range.front();
+                auto ret = std::move(range.front());
                 if (range.next())
                     return value_type();
                 return ret;
@@ -1117,59 +1221,99 @@ namespace linq
         struct first_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 if (!range.next())
                     throw utl::Exception("range is empty");
-                return range.front();
+                return std::move(range.front());
             }
         };
 
         struct first_or_default_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
                 using value_type       = utl::mp_remove_ref<range_value_type>;
                 if (!range.next())
                     return value_type();
-                return range.front();
+                return std::move(range.front());
             }
         };
 
-        struct last_builder : public tag_builder
+        struct last_builder_base
+        {
+            template<class T>
+            struct cache
+            {
+                std::unique_ptr<T> value;
+
+                inline cache& operator=(T& t)
+                    { value.reset(new T(std::move(t))); return *this; }
+
+                inline T& operator*()
+                    { return *value; }
+
+                inline operator bool()
+                    { return static_cast<bool>(value); }
+
+                inline cache()
+                    { }
+            };
+
+            template<class T>
+            struct cache<T&>
+            {
+                T* value;
+
+                inline cache& operator=(T& t)
+                    { value = &t; return *this; }
+
+                inline T& operator*()
+                    { return *value; }
+
+                inline operator bool()
+                    { return static_cast<bool>(value); }
+
+                inline cache() :
+                    value(nullptr)
+                    { }
+            };
+        };
+
+        struct last_builder : public tag_builder, public last_builder_base
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using value_type = mp_range_value_type<TRange>;
-                using cache_type = utl::Nullable<value_type>;
+                using cache_type = cache<value_type>;
 
                 cache_type cache;
                 while(range.next())
                     cache = range.front();
                 if (!static_cast<bool>(cache))
                     throw utl::Exception("range is empty");
-                return *cache;
+                return std::move(*cache);
             }
         };
 
-        struct last_or_default_builder : public tag_builder
+        struct last_or_default_builder : public tag_builder, public last_builder_base
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using range_value_type  = mp_range_value_type<TRange>;
                 using value_type        = utl::mp_remove_ref<range_value_type>;
-                using cache_type        = utl::Nullable<range_value_type>;
+                using cache_type        = cache<value_type>;
 
                 cache_type cache;
                 while(range.next())
                     cache = range.front();
                 if (!static_cast<bool>(cache))
                     return value_type();
-                return static_cast<value_type>(*cache);
+                return std::move(*cache);
             }
         };
 
@@ -1178,7 +1322,7 @@ namespace linq
             size_t capacity;
 
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
                 using value_type       = utl::mp_remove_ref<range_value_type>;
@@ -1187,11 +1331,11 @@ namespace linq
                 vector_type ret;
                 ret.reserve(capacity);
                 while (range.next())
-                    ret.emplace_back(range.front());
+                    ret.emplace_back(std::move(range.front()));
                 return ret;
             }
 
-            to_vector_builder(size_t cap = 16) :
+            inline to_vector_builder(size_t cap = 16) :
                 capacity(cap)
                 { }
         };
@@ -1199,7 +1343,7 @@ namespace linq
         struct to_list_builder : public tag_builder
         {
             template<class TRange>
-            auto build(TRange&& range)
+            inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
                 using value_type       = utl::mp_remove_ref<range_value_type>;
@@ -1207,7 +1351,7 @@ namespace linq
 
                 list_type ret;
                 while (range.next())
-                    ret.emplace_back(range.front());
+                    ret.emplace_back(std::move(range.front()));
                 return ret;
             }
         };
@@ -1227,8 +1371,8 @@ namespace linq
             {
                 using range_type        = TRange;
                 using range_value_type  = mp_range_value_type<range_type>;
-                using key_type          = decltype(std::declval<key_predicate_type>()(std::declval<range_value_type>()));
-                using value_type        = decltype(std::declval<value_predicate_type>()(std::declval<range_value_type>()));
+                using key_type          = decltype(std::declval<key_predicate_type>()(std::declval<range_value_type&>()));
+                using value_type        = decltype(std::declval<value_predicate_type>()(std::declval<range_value_type&>()));
                 using map_type          = std::map<utl::mp_remove_ref<key_type>, value_type>;
 
                 map_type map;
@@ -1243,7 +1387,7 @@ namespace linq
                 return map;
             }
 
-            to_map_builder(const key_predicate_type& kp, const value_predicate_type& vp) :
+            inline to_map_builder(const key_predicate_type& kp, const value_predicate_type& vp) :
                 key_predicate   (kp),
                 value_predicate (vp)
                 { LINQ_CTOR(); }
@@ -1264,7 +1408,7 @@ namespace linq
                     predicate(range.front());
             }
 
-            for_each_builder(const predicate_type& p) :
+            inline for_each_builder(const predicate_type& p) :
                 predicate(p)
                 { }
         };
@@ -1290,7 +1434,7 @@ namespace linq
                 return lookup_type::build(range, key_predicate, value_predicate);
             }
 
-            to_lookup_builder(const key_predicate_type& kp, const value_predicate_type& vp) :
+            inline to_lookup_builder(const key_predicate_type& kp, const value_predicate_type& vp) :
                 key_predicate   (kp),
                 value_predicate (vp)
                 { LINQ_CTOR(); }
@@ -1345,22 +1489,22 @@ namespace linq
             { return std::get<1>(t); }
 
         template<class T>
-        inline auto operator()(T& t)
-            { return t; }
+        inline auto operator()(T&& t)
+            { return std::forward<T>(t); }
     };
 
     /* constructors ******************************************************************************/
     template<class TIterator>
     inline auto from_iterator(TIterator&& beg, TIterator&& end)
-        { return __impl::iterator_range<TIterator>(std::forward<TIterator>(beg), std::forward<TIterator>(end)); }
+        { return __impl::iterator_range_wrapper<TIterator>(std::forward<TIterator>(beg), std::forward<TIterator>(end)); }
 
     template<class TContainer>
     inline auto from_container(TContainer&& container)
-        { return __impl::container_range<TContainer>(std::forward<TContainer>(container)); }
+        { return __impl::container_range_wrapper<TContainer>(std::forward<TContainer>(container)); }
 
     template<class TPredicate>
     inline auto from_generator(TPredicate&& predicate)
-        { return __impl::generator_range<TPredicate>(std::forward<TPredicate>(predicate)); }
+        { return __impl::generator_range_wrapper<TPredicate>(std::forward<TPredicate>(predicate)); }
 
     template<class TArray>
     inline auto from_array(TArray&& array)
@@ -1373,19 +1517,19 @@ namespace linq
     /* filter ************************************************************************************/
     template<class TPredicate>
     inline auto where(TPredicate&& predicate)
-        { return __impl::predicate_builder<TPredicate, __impl::where_range>(std::forward<TPredicate>(predicate)); }
+        { return __impl::predicate_builder<TPredicate, __impl::where_range_wrapper>(std::forward<TPredicate>(predicate)); }
 
     template<class TPredicate>
     inline auto select(TPredicate&& predicate)
-        { return __impl::predicate_builder<TPredicate, __impl::select_range>(std::forward<TPredicate>(predicate)); }
+        { return __impl::predicate_builder<TPredicate, __impl::select_range_wrapper>(std::forward<TPredicate>(predicate)); }
 
     template<class TPredicate>
     inline auto select_many(TPredicate&& predicate)
-        { return __impl::predicate_builder<TPredicate, __impl::select_many_range>(std::forward<TPredicate>(predicate)); }
+        { return __impl::predicate_builder<TPredicate, __impl::select_many_range_wrapper>(std::forward<TPredicate>(predicate)); }
 
     template<class TSelectPredicate, class TLessPredicate>
     inline auto order_by(TSelectPredicate&& sp, TLessPredicate&& lp)
-        { return __impl::dual_predicate_builder<TSelectPredicate, TLessPredicate, __impl::order_by_range>(std::forward<TSelectPredicate>(sp), std::forward<TLessPredicate>(lp)); }
+        { return __impl::dual_predicate_builder<TSelectPredicate, TLessPredicate, __impl::order_by_range_wrapper>(std::forward<TSelectPredicate>(sp), std::forward<TLessPredicate>(lp)); }
 
     template<class TSelectPredicate>
     inline auto order_by(TSelectPredicate&& sp)
@@ -1396,7 +1540,7 @@ namespace linq
 
     template<class TLessPredicate>
     inline auto distinct(TLessPredicate&& lp)
-        { return __impl::predicate_builder<TLessPredicate, __impl::distinct_range>(std::forward<TLessPredicate>(lp)); }
+        { return __impl::predicate_builder<TLessPredicate, __impl::distinct_range_wrapper>(std::forward<TLessPredicate>(lp)); }
 
     inline auto distinct()
         { return distinct(op_less_default()); }

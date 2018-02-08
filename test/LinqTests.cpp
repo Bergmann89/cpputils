@@ -9,6 +9,10 @@ namespace linq_tests
     {
         int value;
 
+        TestData() :
+            value(0)
+            { }
+
         TestData(int v) :
             value(v)
             { }
@@ -21,6 +25,28 @@ namespace linq_tests
         TestDataMany(const std::vector<int>& v) :
             values(v)
             { }
+    };
+
+    struct MoveOnlyData
+    {
+        int value;
+
+        MoveOnlyData() :
+            value(0)
+            { LINQ_CTOR(); }
+
+        MoveOnlyData(int v) :
+            value(v)
+            { LINQ_CTOR(); }
+
+        MoveOnlyData(MoveOnlyData&& o) :
+            value(0)
+            { std::swap(value, o.value); LINQ_MOVE_CTOR(); }
+
+        MoveOnlyData(const MoveOnlyData&) = delete;
+
+        ~MoveOnlyData()
+            { LINQ_DTOR(); }
     };
 }
 
@@ -461,4 +487,204 @@ TEST(LinqTest, to_lookup)
     ASSERT_EQ   (&data.at(5).second,    &range2.front());
     ASSERT_EQ   (std::string("Str2-1"),  range2.front());
     ASSERT_FALSE(range2.next());
+
+    using lookup_type = decltype(lookup);
+    auto map = lookup
+        >>  to_map([](lookup_type::range_type::value_type v){
+                return v.first;
+            }, [](lookup_type::range_type::value_type v){
+                return v.second >> to_vector();
+            });
+
+    using map_type = decltype(map);
+    map_type expected({
+        { 0, { "Str0-0", "Str0-1", "Str0-2" } },
+        { 1, { "Str1-0", "Str1-1", "Str1-2" } },
+        { 2, { "Str2-0", "Str2-1" } }
+    });
+    EXPECT_EQ(expected, map);
+}
+
+TEST(LinqTest, moveable_objects)
+{
+    std::vector<MoveOnlyData> data;
+    data.emplace_back(1);
+
+    {
+    data.at(0).value = 1;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  first();
+    EXPECT_EQ(1, v.value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 2;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  first_or_default();
+    EXPECT_EQ(2, v.value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 3;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  last();
+    EXPECT_EQ(3, v.value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 4;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  last_or_default();
+    EXPECT_EQ(4, v.value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 5;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  single();
+    EXPECT_EQ(5, v.value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 6;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  single_or_default();
+    EXPECT_EQ(6, v.value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 7;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  to_vector();
+    ASSERT_EQ(1, v.size());
+    EXPECT_EQ(7, v.at(0).value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 8;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  to_map([](MoveOnlyData& d){
+                return 5;
+            }, [](MoveOnlyData& d){
+                return std::move(d);
+            });
+    auto it = v.find(5);
+    ASSERT_NE(it, v.end());
+    EXPECT_EQ(8, it->second.value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+
+    {
+    data.at(0).value = 9;
+    auto v = from_container(data)
+        >>  select([](MoveOnlyData& d) {
+                return std::move(d);
+            })
+        >>  to_list();
+    auto it = v.begin();
+    ASSERT_NE(it, v.end());
+    EXPECT_EQ(9, it->value);
+    EXPECT_EQ(0, data.at(0).value);
+    }
+}
+
+TEST(LinqTest, const_objects)
+{
+    const TestData data[] = { TestData(1) };
+
+    {
+    auto v = from_array(data)
+        >>  select([](const TestData& d) {
+                return d;
+            })
+        >>  first();
+    EXPECT_EQ(1, v.value);
+    }
+
+    {
+    auto v = from_array(data)
+        >>  select([](const TestData& d) {
+                return d;
+            })
+        >>  first_or_default();
+    EXPECT_EQ(1, v.value);
+    }
+
+    {
+    auto v = from_array(data)
+        >>  select([](const TestData& d) {
+                return std::move(d);
+            })
+        >>  last();
+    EXPECT_EQ(1, v.value);
+    }
+
+    {
+    auto v = from_array(data)
+        >>  select([](const TestData& d) {
+                return d;
+            })
+        >>  last_or_default();
+    EXPECT_EQ(1, v.value);
+    }
+
+    {
+    auto v = from_array(data)
+        >>  select([](const TestData& d) {
+                return d;
+            })
+        >>  single();
+    EXPECT_EQ(1, v.value);
+    }
+
+    {
+    auto v = from_array(data)
+        >>  select([](const TestData& d) {
+                return d;
+            })
+        >>  single_or_default();
+    EXPECT_EQ(1, v.value);
+    }
+
+    {
+    auto v = from_array(data)
+        >>  select([](const TestData& d) {
+                return d;
+            })
+        >>  to_list();
+    auto it = v.begin();
+    ASSERT_NE(it, v.end());
+    EXPECT_EQ(1, it->value);
+    }
 }

@@ -835,7 +835,7 @@ namespace linq
 
             inline value_type& front()
             {
-                assert(current >= 0 && current < values.size());
+                assert(current >= 0 && static_cast<size_t>(current) < values.size());
                 return *values.at(current);
             }
 

@@ -1,8 +1,6 @@
 # Project: test_cpputils ##########################################################################
 
 Project                     ( test_cpputils )
-Set                         ( CMAKE_CXX_STANDARD 14 )
-Include                     ( GlobalCompilerFlags OPTIONAL )
 File                        ( GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp )
 Add_Executable              ( test_cpputils EXCLUDE_FROM_ALL ${SOURCE_FILES} )
 If                          ( __COTIRE_INCLUDED )

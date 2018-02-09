@@ -5,6 +5,8 @@ If                          ( NOT CMAKE_BUILD_TYPE )
 EndIf                       ( NOT CMAKE_BUILD_TYPE )
 
 CMake_Minimum_Required      ( VERSION 3.5.1 FATAL_ERROR )
+Set                         ( CMAKE_CXX_STANDARD 14 )
+Include                     ( GlobalCompilerFlags OPTIONAL )
 Include                     ( cotire OPTIONAL )
 
 # Projects ########################################################################################

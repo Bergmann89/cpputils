@@ -50,22 +50,22 @@ namespace utl
 
 
 
-        inline value_type& operator*()
+        inline auto& operator*()
             { return value(); }
 
-        inline const value_type& operator*() const
+        inline auto& operator*() const
             { return value(); }
 
-        inline pointer_type operator->()
+        inline auto* operator->()
             { return &value(); }
 
-        inline const pointer_type operator->() const
+        inline auto* operator->() const
             { return &value(); }
 
         inline value_type& operator()()
             { return value(); }
 
-        inline const value_type& operator()() const
+        inline auto& operator()() const
             { return value(); }
 
         inline explicit operator bool() const

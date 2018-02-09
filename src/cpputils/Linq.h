@@ -504,10 +504,10 @@ namespace linq
                 return (current != end);
             }
 
-            inline iterator_range(iterator_type beg, iterator_type end) :
+            inline iterator_range(iterator_type b, iterator_type e) :
                 initialized (false),
-                current     (beg),
-                end         (end)
+                current     (b),
+                end         (e)
                 { LINQ_CTOR(); }
 
             inline iterator_range(const this_type& other) :
@@ -1242,12 +1242,12 @@ namespace linq
                 using value_type = mp_range_value_type<TRange>;
                 using cache_type = cache<value_type>;
 
-                cache_type cache;
+                cache_type tmp;
                 while(range.next())
-                    cache = range.front();
-                if (!static_cast<bool>(cache))
+                    tmp = range.front();
+                if (!static_cast<bool>(tmp))
                     throw utl::Exception("range is empty");
-                return std::move(*cache);
+                return std::move(*tmp);
             }
         };
 
@@ -1260,12 +1260,12 @@ namespace linq
                 using value_type        = utl::mp_remove_ref<range_value_type>;
                 using cache_type        = cache<value_type>;
 
-                cache_type cache;
+                cache_type tmp;
                 while(range.next())
-                    cache = range.front();
-                if (!static_cast<bool>(cache))
+                    tmp = range.front();
+                if (!static_cast<bool>(tmp))
                     return value_type();
-                return std::move(*cache);
+                return std::move(*tmp);
             }
         };
 

@@ -6,8 +6,6 @@ EndIf                       ( NOT CMAKE_BUILD_TYPE )
 
 CMake_Minimum_Required      ( VERSION 3.5.1 FATAL_ERROR )
 Include                     ( cotire OPTIONAL )
-CMake_Policy                ( SET CMP0065 NEW )
-CMake_Policy                ( SET CMP0065 NEW )
 
 # Projects ########################################################################################
 

@@ -122,7 +122,7 @@ TEST(LinqTest, from_array)
 
 TEST(LinqTest, from_generator)
 {
-    int pos = 0;
+    size_t pos = 0;
     std::vector<int> data({ 4, 5, 6, 7, 8 });
     auto range = from_generator([&]{
         int* ret = nullptr;

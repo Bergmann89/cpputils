@@ -824,11 +824,8 @@ namespace linq
             using less_predicate_type   = TLessPredicate;
             using this_type             = order_by_range<range_type, select_predicate_type, less_predicate_type>;
             using value_type            = mp_range_value_type<range_type>;
-            using vector_value_type     = utl::mp_if<
-                                            std::is_reference<value_type>,
-                                            utl::mp_remove_ref<value_type>*,
-                                            value_type>;
-            using vector_type           = std::vector<vector_value_type>;
+            using wrapped_value_type    = wrapper<value_type>;
+            using vector_type           = std::vector<wrapped_value_type>;
 
             range_type              range;
             select_predicate_type   select_predicate;
@@ -836,64 +833,11 @@ namespace linq
             ssize_t                 current;
             vector_type             values;
 
-            template<class X>
-            inline utl::mp_enable_if_c<std::is_reference<X>::value, X>
-            front_impl()
+            inline value_type& front()
             {
-                assert(current >= 0);
-                assert(current < static_cast<ssize_t>(values.size()));
+                assert(current >= 0 && current < values.size());
                 return *values.at(current);
             }
-
-            template<class X>
-            inline utl::mp_enable_if_c<!std::is_reference<X>::value, X>
-            front_impl()
-            {
-                assert(current >= 0);
-                assert(current < static_cast<ssize_t>(values.size()));
-                return values.at(current);
-            }
-
-            template<class X>
-            inline utl::mp_enable_if_c<std::is_reference<X>::value>
-            storeValue(X x)
-                { values.emplace_back(&x); }
-
-            template<class X>
-            inline utl::mp_enable_if_c<!std::is_reference<X>::value>
-            storeValue(X x)
-                { values.emplace_back(x); }
-
-            template<class X>
-            inline utl::mp_enable_if_c<std::is_reference<X>::value>
-            sortValues()
-            {
-                std::sort(
-                    values.begin(),
-                    values.end(),
-                    [this](vector_value_type& l, vector_value_type& r) {
-                        return this->less_predicate(
-                            this->select_predicate(*l),
-                            this->select_predicate(*r));
-                    });
-            }
-
-            template<class X>
-            inline utl::mp_enable_if_c<!std::is_reference<X>::value>
-            sortValues()
-            {
-                std::sort(
-                    values.begin(),
-                    values.end(),
-                    [this](vector_value_type& l, vector_value_type& r) {
-                        return this->less_predicate(
-                            this->select_predicate(l),
-                            this->select_predicate(r));
-                    });
-            }
-
-            inline value_type& front()
-                { return front_impl<value_type>(); }
 
             inline bool next()
             {
@@ -901,12 +845,20 @@ namespace linq
                 {
                     values.clear();
                     while (range.next())
-                        storeValue<value_type>(range.front());
+                        values.emplace_back(range.front());
 
                     if (values.empty())
                         return false;
 
-                    sortValues<value_type>();
+                    std::sort(
+                    values.begin(),
+                    values.end(),
+                    [this](wrapped_value_type& l, wrapped_value_type& r) {
+                        return this->less_predicate(
+                            this->select_predicate(*l),
+                            this->select_predicate(*r));
+                    });
+                    
                     current = 0;
                     return true;
                 }

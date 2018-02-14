@@ -868,6 +868,87 @@ namespace linq
         template<class TRange, class TLessPredicate>
         using distinct_range_wrapper = range_wrapper<distinct_range<TRange, TLessPredicate>>;
 
+        template<class TRange, class T>
+        struct default_if_empty_range : public tag_range
+        {
+            using value_type = T;
+            using range_type = TRange;
+            using this_type  = default_if_empty_range<range_type, value_type>;
+
+            enum class State 
+            {
+                Init,
+                Iterate,
+                Empty,
+                Finish
+            };
+
+            range_type range;
+            value_type value;
+            State      state;
+
+            inline value_type& front()
+            {
+                assert(state != State::Init && state != State::Finish);
+                return (state == State::Empty 
+                    ? value
+                    : range.front());
+            } 
+
+            inline bool next()
+            {
+                switch(state)
+                {
+                    case State::Init:
+                        
+                        state = range.next()
+                            ? State::Iterate
+                            : State::Empty;
+                        return true;
+
+                    case State::Iterate:
+                        if (!range.next())
+                        {
+                            state = State::Finish;
+                            return false;
+                        }
+                        return true;
+
+                    case State::Empty:
+                        state = State::Finish;
+                        /* fall through */
+
+                    default:
+                        return false;
+                }
+            }
+
+            template<class R, class X>
+            inline default_if_empty_range(R&& r, X&& t) :
+                range(std::forward<R>(r)),
+                value(t),
+                state(State::Init)
+                { LINQ_CTOR(); }
+
+            inline default_if_empty_range(const default_if_empty_range& other) :
+                range(other.range),
+                value(other.value),
+                state(other.state)
+                { LINQ_COPY_CTOR(); }
+
+            inline default_if_empty_range(default_if_empty_range&& other) :
+                range(std::move(other).range),
+                value(std::move(other).value),
+                state(std::move(other).state)
+                { LINQ_MOVE_CTOR(); }
+
+            inline ~default_if_empty_range()
+                { LINQ_DTOR(); }
+        };
+
+        template<class TRange, class T>
+        using default_if_empty_range_wrapper = range_wrapper<default_if_empty_range<TRange, T>>;
+
         /* builder *******************************************************************************/
         template<template<class> class TOuterRange>
         struct builder : public tag_builder
@@ -962,6 +1043,35 @@ namespace linq
 
             inline ~dual_predicate_builder()
                 { LINQ_DTOR(); }
+        };
+
+        template <class T>
+        struct default_if_empty_builder : public tag_builder
+        {
+            using value_type = T;
+            using this_type  = default_if_empty_builder<value_type>;
+
+            value_type value;
+            
+            template<class TRange>
+            inline auto build(TRange&& range) const
+            { 
+                // CAUTION: we want no reference to a range here, because the passed range may be destroyed before used in outer_range_type
+                using range_type = utl::mp_remove_ref<TRange>;
+                return default_if_empty_range_wrapper<range_type, T>(std::forward<range_type>(range), value); 
+            }
+
+            default_if_empty_builder(T&& t) :
+                value(t)
+                { }
+
+            default_if_empty_builder(const this_type& other) :
+                value(other.value)
+                { }
+
+            default_if_empty_builder(this_type&& other) :
+                value(std::move(other).value)
+                { }
         };
 
         struct count_builder : public tag_builder
@@ -1418,6 +1528,10 @@ namespace linq
     inline auto distinct()
         { return distinct(op_less_default()); }
 
+    template<class T>
+    inline auto default_if_empty(T&& t)
+        { return __impl::default_if_empty_builder<T>(std::forward<T>(t)); }
+        
     /* result generators */
     inline auto count()
         { return __impl::count_builder(); }

@@ -79,7 +79,6 @@ TEST(HandleManagerTest, tryGet)
 
 TEST(HandleManagerTest, get)
 {
-    int val;
     HandleManagerInt manager;
     EXPECT_ANY_THROW(manager.get(123));
     EXPECT_ANY_THROW(manager.get(5132));
@@ -93,7 +92,6 @@ TEST(HandleManagerTest, get)
 
 TEST(HandleManagerTest, update)
 {
-    int val;
     HandleManagerInt manager;
     EXPECT_FALSE(manager.update(123, 555));
     EXPECT_FALSE(manager.update(5132, 555));

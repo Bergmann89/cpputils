@@ -257,6 +257,25 @@ TEST(LinqTest, distinct)
     ASSERT_FALSE(range.next());
 }
 
+TEST(LinqTest, default_if_empty)
+{
+    std::vector<int> values0;
+    auto e0 = from_container(values0) >> default_if_empty(5);
+    ASSERT_TRUE (e0.next());
+    ASSERT_EQ   (5, e0.front());
+    ASSERT_FALSE(e0.next());
+
+    std::vector<int> values1({ 1, 2, 3 });
+    auto e1 = from_container(values1) >> default_if_empty(5);
+    ASSERT_TRUE (e1.next());
+    ASSERT_EQ   (1, e1.front());
+    ASSERT_TRUE (e1.next());
+    ASSERT_EQ   (2, e1.front());
+    ASSERT_TRUE (e1.next());
+    ASSERT_EQ   (3, e1.front());
+    ASSERT_FALSE(e1.next());
+}
+
 TEST(LinqTest, count)
 {
     std::vector<int> data({ 4, 5, 6, 7, 8 });

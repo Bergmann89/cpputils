@@ -324,17 +324,17 @@ utl::Handle::toString() const
     memset(&buffer[0], 0, sizeof(buffer));
     const uint8_t *p = reinterpret_cast<const uint8_t*>(this);
     int x = 0;
-    for (int i = 0; i < sizeof(*this); ++i)
+    for (size_t i = 0; i < sizeof(*this); ++i)
     {
         if (i == 1 || i == 2 || i == 4)
         {
             buffer[2*i+x] = '-';
             ++x;
         }
-        buffer[2*i+x]    = (p[i] >> 4) & 0x0F;
-        buffer[2*i+x+1]  = (p[i] >> 0) & 0x0F;
-        buffer[2*i+x]   += (buffer[2*i+x]   > 9 ? 'A' - 10 : '0');
-        buffer[2*i+x+1] += (buffer[2*i+x+1] > 9 ? 'A' - 10 : '0');
+        buffer[2*i+x]   = static_cast<char>((p[i] >> 4) & 0x0F);
+        buffer[2*i+x+1] = static_cast<char>((p[i] >> 0) & 0x0F);
+        buffer[2*i+x]   = static_cast<char>(buffer[2*i+x]   + (buffer[2*i+x]   > 9 ? 'A' - 10 : '0'));
+        buffer[2*i+x+1] = static_cast<char>(buffer[2*i+x+1] + (buffer[2*i+x+1] > 9 ? 'A' - 10 : '0'));
     }
     return std::string(&buffer[0], sizeof(buffer));
 }
@@ -358,22 +358,22 @@ utl::Handle::fromString(const std::string& str, Handle& handle)
     const char *c = str.c_str();
     const char *e = c + str.size();
     uint8_t* p = reinterpret_cast<uint8_t*>(&handle);
-    int i = 0;
+    size_t i = 0;
     while(c < e && i < 2*sizeof(handle))
     {
         if (*c != '-')
         {
             uint8_t v;
             if (*c >= '0' && *c <= '9')
-                v = *c - '0';
+                v = static_cast<uint8_t>(*c - '0');
             else if (*c >= 'a' && *c <= 'f')
-                v = *c - 'a';
+                v = static_cast<uint8_t>(*c - 'a');
             else if (*c >= 'A' && *c <= 'F')
-                v = *c - 'A';
+                v = static_cast<uint8_t>(*c - 'A');
             else
                 return false;
             if (i & 1)
-                v <<= 4;
+                v = static_cast<uint8_t>(v << 4);
             p[i >> 1] |= v;
             ++i;
         }
@@ -556,7 +556,7 @@ utl::__impl::System<T>::pushFront(
     }
     entry.link(INVALID_INDEX, first, status);
     first = index;
-    if (last = INVALID_INDEX)
+    if (last == INVALID_INDEX)
         last = index;
 }
 
@@ -594,7 +594,7 @@ utl::__impl::System<T>::popFront(
     EntryStatus status)
 {
     if (    canGrow
-        && (    first >= _entries.size()
+        && (    first >= static_cast<InternIndex>(_entries.size())
             ||  first == INVALID_INDEX))
         grow(first + GROW_SIZE);
     assert(first >= 0);
@@ -672,9 +672,9 @@ utl::__impl::System<T>::remove(
         assert(entry.next() < _entries.size());
         _entries[entry.next()].prev(entry.prev());
     }
-    if (first == index)
+    if (first == static_cast<InternIndex>(index))
         first = entry.next();
-    if (last == index)
+    if (last == static_cast<InternIndex>(index))
         last = entry.prev();
     entry.unlink();
 }
@@ -688,7 +688,7 @@ utl::__impl::System<T>::grow(
         size = _entries.size() + GROW_SIZE;
     if (size < _entries.size())
         return;
-    int idx = _entries.size();
+    size_t idx = _entries.size();
     _entries.resize(size);
     while (idx < _entries.size())
     {
@@ -962,7 +962,7 @@ utl::HandleManager<T>::insert(
     auto& entry = system[index];
     entry.assign(value, tId);
     HandleData hd;
-    hd.entryIndex = index;
+    hd.entryIndex = static_cast<uint32_t>(index);
     hd.counter    = entry.counter();
     hd.typeId     = tId,
     hd.systemId   = sId;

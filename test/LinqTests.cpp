@@ -488,11 +488,11 @@ TEST(LinqTest, to_lookup)
     ASSERT_EQ   (std::string("Str2-1"),  range2.front());
     ASSERT_FALSE(range2.next());
 
-    using lookup_type = decltype(lookup);
+    using key_value_range_type = linq::lookup_key_value_range_type<int&, std::string&>;
     auto map = lookup
-        >>  to_map([](lookup_type::range_type::value_type v){
+        >>  to_map([](key_value_range_type::value_type v){
                 return v.first;
-            }, [](lookup_type::range_type::value_type v){
+            }, [](key_value_range_type::value_type v){
                 return v.second >> to_vector();
             });
 
@@ -503,6 +503,79 @@ TEST(LinqTest, to_lookup)
         { 2, { "Str2-0", "Str2-1" } }
     });
     EXPECT_EQ(expected, map);
+}
+
+struct StationMock
+{
+    uint32_t id;
+    std::string name1;
+    std::string name2;
+    std::string name3;
+    std::string name4;
+};
+
+struct op_select_names
+{
+    using pair_type   = std::pair<std::string, uint32_t>;
+    using vector_type = std::vector<pair_type>;
+
+    inline void addToVec(vector_type& vec, const std::string& name, uint32_t sID)
+    {
+        if (name.empty())
+            return;
+        bool exists = from_container(vec)
+                        >> select(op_select_key_default())
+                        >> contains(name);
+        if (!exists)
+            vec.emplace_back(name, sID);
+    }
+
+    inline vector_type operator()(StationMock& s)
+    {
+        vector_type ret;
+        addToVec(ret, s.name1, s.id);
+        addToVec(ret, s.name2, s.id);
+        addToVec(ret, s.name3, s.id);
+        addToVec(ret, s.name4, s.id);
+        return ret;
+    }
+};
+
+void checkMapEntry(std::map<std::string, std::vector<uint32_t>>& map, std::string name, std::vector<uint32_t> ids)
+{
+    auto it = map.find(name);
+    ASSERT_NE(it, map.end());
+    EXPECT_EQ(name, it->first);
+    EXPECT_EQ(ids, it->second);
+}
+
+TEST(LinqTest, to_lookup_2)
+{
+    std::vector<StationMock> stations ({
+        { 1, "sname11" , "sname12", "sname13", "sname14" },
+        { 2, "sname21" , "sname21", "sname23", "sname24" },
+        { 3, "sname11" , "sname31", "sname33", "sname34" },
+    });
+
+    using key_value_range_type = linq::lookup_key_value_range_type<std::string, uint32_t>;
+    auto myMap = linq::from_container(stations)
+        >>  linq::select_many(op_select_names())
+        >>  linq::to_lookup()
+        >>  linq::to_map([](key_value_range_type::value_type p) {
+                return p.first;
+            }, [](key_value_range_type::value_type p) {
+                return p.second >> linq::to_vector();
+            });
+    checkMapEntry(myMap, "sname11", { 1, 3 });
+    checkMapEntry(myMap, "sname12", { 1 });
+    checkMapEntry(myMap, "sname13", { 1 });
+    checkMapEntry(myMap, "sname14", { 1 });
+    checkMapEntry(myMap, "sname21", { 2 });
+    checkMapEntry(myMap, "sname23", { 2 });
+    checkMapEntry(myMap, "sname24", { 2 });
+    checkMapEntry(myMap, "sname31", { 3 });
+    checkMapEntry(myMap, "sname33", { 3 });
+    checkMapEntry(myMap, "sname34", { 3 });
 }
 
 TEST(LinqTest, moveable_objects)

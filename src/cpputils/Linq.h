@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 
+#include "Misc.h"
 #include "Nullable.h"
 #include "Exception.h"
 #include "MetaProgramming.h"
@@ -49,87 +50,11 @@ namespace linq
         using mp_range_value_type = typename utl::mp_remove_ref<T>::value_type;
 
         /* helper types **************************************************************************/
-        template<class T>
-        struct wrapper
-        {
-            using value_type = T;
-
-            value_type value;
-
-            inline value_type operator*() const
-                { return value; }
-
-            inline wrapper& operator=(const wrapper& other)
-            {
-                value = other.value;
-                return *this;
-            }
-
-            inline wrapper& operator=(wrapper&& other)
-            {
-                value = std::move(other).value;
-                return *this;
-            }
-
-            template<class X>
-            inline wrapper(X&& v) :
-                value(std::forward<X>(v))
-                { }
-
-            inline wrapper(const value_type& v) :
-                value(v)
-                { }
-
-            inline wrapper(const wrapper& other) :
-                value(other.value)
-                { }
-
-            inline wrapper(wrapper&& other) :
-                value(std::move(other.value))
-                { }
-        };
-
-        template<class T>
-        struct wrapper<T&>
-        {
-            using value_type   = T&;
-            using storage_type = T*;
-
-            storage_type value;
-
-            inline value_type operator*() const
-                { return *value; }
-
-            inline wrapper& operator=(const wrapper& other)
-            {
-                value = other.value;
-                return *this;
-            }
-
-            inline wrapper& operator=(wrapper&& other)
-            {
-                value = std::move(other.value);
-                return *this;
-            }
-
-            inline wrapper(value_type v) :
-                value(&v)
-                { }
-
-            inline wrapper(const wrapper& other) :
-                value(other.value)
-                { }
-
-            inline wrapper(wrapper&& other) :
-                value(std::move(other.value))
-                { }
-        };
-
         template<class T, class TPredicate>
         struct op_wrapper_less
         {
             using predicate_type    = TPredicate;
-            using value_type        = wrapper<T>;
+            using value_type        = utl::wrapper<T>;
 
             predicate_type predicate;
 
@@ -194,24 +119,19 @@ namespace linq
             using clean_key_type        = utl::mp_remove_ref<key_type>;
             using value_type            = TValue;
             using this_type             = lookup<key_type, value_type>;
-            using wrapped_key_type      = wrapper<key_type>;
-            using wrapped_value_type    = wrapper<value_type>;
+            using wrapped_key_type      = utl::wrapper<key_type>;
+            using wrapped_value_type    = utl::wrapper<value_type>;
             using keys_value_type       = std::pair<wrapped_key_type, size_t>;
             using keys_type             = std::vector<keys_value_type>;
             using values_type           = std::vector<wrapped_value_type>;
             using range_indices_type    = std::pair<size_t, size_t>;
 
-        private:
             struct lookup_range;
             struct lookup_key_value_range;
 
             using lookup_range_wrapper           = range_wrapper<lookup_range>;
             using lookup_key_value_range_wrapper = range_wrapper<lookup_key_value_range>;
 
-        public:
-            using range_type = lookup_key_value_range_wrapper;
-
-        private:
             struct lookup_range : public tag_range
             {
                 using value_type = lookup::value_type;
@@ -223,10 +143,10 @@ namespace linq
                     Finished,
                 };
 
-                const values_type&  values;
-                size_t              current;
-                size_t              end;
-                State               state;
+                values_type&  values;
+                size_t        current;
+                size_t        end;
+                State         state;
 
                 inline value_type& front()
                 {
@@ -258,7 +178,7 @@ namespace linq
                     }
                 }
 
-                inline lookup_range(const values_type& v, size_t c, size_t e) :
+                inline lookup_range(values_type& v, size_t c, size_t e) :
                     values  (v),
                     current (c),
                     end     (e),
@@ -273,10 +193,10 @@ namespace linq
                     { LINQ_COPY_CTOR(); }
 
                 inline lookup_range(lookup_range&& other) :
-                    values  (std::move(other.values)),
-                    current (std::move(other.current)),
-                    end     (std::move(other.end)),
-                    state   (std::move(other.state))
+                    values  (std::move(other).values),
+                    current (std::move(other).current),
+                    end     (std::move(other).end),
+                    state   (std::move(other).state)
                     { LINQ_MOVE_CTOR(); }
 
                 inline ~lookup_range()
@@ -562,8 +482,9 @@ namespace linq
                 return (current != std::end(container));
             }
 
-            inline container_range(container_type& c) noexcept :
-                container   (c),
+            template<class C>
+            inline container_range(C&& c) noexcept :
+                container   (std::forward<C>(c)),
                 initialized (false)
                 { LINQ_CTOR(); }
 
@@ -737,8 +658,8 @@ namespace linq
             template<class T>
             struct __impl_make_inner_range
             {
-                using iterator_type = decltype(std::begin(std::declval<T>()));
-                using type          = iterator_range<iterator_type>;
+                using container_type = T;
+                using type           = container_range<container_type>;
             };
 
             template<class T>
@@ -762,13 +683,13 @@ namespace linq
 
             template<class T>
             inline typename std::enable_if<std::is_base_of<tag_range, T>::value>::type
-            build_inner_range(T value)
+            build_inner_range(T&& value)
                 { inner_range = value; }
 
             template<class T>
             inline typename std::enable_if<!std::is_base_of<tag_range, T>::value>::type
-            build_inner_range(T value)
-                { inner_range = inner_range_type(std::begin(value), std::end(value)); }
+            build_inner_range(T&& value)
+                { inner_range = inner_range_type(std::forward<T>(value)); }
 
             inline value_type& front()
             {
@@ -824,7 +745,7 @@ namespace linq
             using less_predicate_type   = TLessPredicate;
             using this_type             = order_by_range<range_type, select_predicate_type, less_predicate_type>;
             using value_type            = mp_range_value_type<range_type>;
-            using wrapped_value_type    = wrapper<value_type>;
+            using wrapped_value_type    = utl::wrapper<value_type>;
             using vector_type           = std::vector<wrapped_value_type>;
 
             range_type              range;
@@ -858,7 +779,7 @@ namespace linq
                             this->select_predicate(*l),
                             this->select_predicate(*r));
                     });
-                    
+
                     current = 0;
                     return true;
                 }
@@ -904,7 +825,7 @@ namespace linq
             using less_predicate_type   = TLessPredicate;
             using this_type             = distinct_range<range_type, less_predicate_type>;
             using value_type            = mp_range_value_type<range_type>;
-            using set_value_type        = wrapper<value_type>;
+            using set_value_type        = utl::wrapper<value_type>;
             using set_less_type         = op_wrapper_less<value_type, less_predicate_type>;
             using set_type              = std::set<set_value_type, set_less_type>;
 
@@ -1277,7 +1198,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
-                using value_type       = utl::mp_remove_ref<range_value_type>;
+                using value_type       = utl::mp_remove_const<utl::mp_remove_ref<range_value_type>>;
                 using vector_type      = std::vector<value_type>;
 
                 vector_type ret;
@@ -1418,11 +1339,11 @@ namespace linq
     struct op_select_key_default
     {
         template<class TKey, class TValue>
-        inline auto operator()(std::pair<TKey, TValue>& p)
+        inline auto operator()(std::pair<TKey, TValue> p)
             { return p.first; }
 
         template<class TKey, class TValue>
-        inline auto operator()(std::tuple<TKey, TValue>& t)
+        inline auto operator()(std::tuple<TKey, TValue> t)
             { return std::get<0>(t); }
 
         template<class T>
@@ -1433,11 +1354,11 @@ namespace linq
     struct op_select_value_default
     {
         template<class TKey, class TValue>
-        inline auto operator()(std::pair<TKey, TValue>& p)
+        inline auto operator()(std::pair<TKey, TValue> p)
             { return p.second; }
 
         template<class TKey, class TValue>
-        inline auto operator()(std::tuple<TKey, TValue>& t)
+        inline auto operator()(std::tuple<TKey, TValue> t)
             { return std::get<1>(t); }
 
         template<class T>
@@ -1570,4 +1491,10 @@ namespace linq
 
     inline auto to_lookup()
         { return to_lookup(std::move(op_select_key_default()), std::move(op_select_value_default())); }
+
+    template <class TKey, class TValue>
+    using lookup_value_range_type = typename __impl::lookup<TKey, TValue>::lookup_range_wrapper;
+
+    template <class TKey, class TValue>
+    using lookup_key_value_range_type = typename __impl::lookup<TKey, TValue>::lookup_key_value_range_wrapper;
 }

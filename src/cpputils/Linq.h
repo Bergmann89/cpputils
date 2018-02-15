@@ -1176,9 +1176,11 @@ namespace linq
             template<class TRange>
             inline auto build(TRange&& range)
             {
+                using range_value_type = mp_range_value_type<TRange>;
+
                 if (!range.next())
                     throw utl::Exception("range is empty");
-                auto ret = std::move(range.front());
+                auto ret = std::forward<range_value_type>(range.front());
                 if (range.next())
                     throw utl::Exception("range contains more than one value");
                 return ret;
@@ -1194,7 +1196,7 @@ namespace linq
                 using value_type       = utl::mp_remove_ref<range_value_type>;
                 if (!range.next())
                     return value_type();
-                auto ret = std::move(range.front());
+                auto ret = std::forward<range_value_type>(range.front());
                 if (range.next())
                     return value_type();
                 return ret;
@@ -1206,9 +1208,10 @@ namespace linq
             template<class TRange>
             inline auto build(TRange&& range)
             {
+                using range_value_type = mp_range_value_type<TRange>;
                 if (!range.next())
                     throw utl::Exception("range is empty");
-                return std::move(range.front());
+                return std::forward<range_value_type>(range.front());
             }
         };
 
@@ -1221,7 +1224,7 @@ namespace linq
                 using value_type       = utl::mp_remove_ref<range_value_type>;
                 if (!range.next())
                     return value_type();
-                return std::move(range.front());
+                return std::forward<range_value_type>(range.front());
             }
         };
 
@@ -1232,8 +1235,9 @@ namespace linq
             {
                 std::unique_ptr<T> value;
 
-                inline cache& operator=(T& t)
-                    { value.reset(new T(std::move(t))); return *this; }
+                template<class X>
+                inline cache& operator=(X&& x)
+                    { value.reset(new T(std::forward<X>(x))); return *this; }
 
                 inline T& operator*()
                     { return *value; }
@@ -1270,15 +1274,15 @@ namespace linq
             template<class TRange>
             inline auto build(TRange&& range)
             {
-                using value_type = mp_range_value_type<TRange>;
-                using cache_type = cache<value_type>;
+                using range_value_type = mp_range_value_type<TRange>;
+                using cache_type       = cache<range_value_type>;
 
                 cache_type tmp;
                 while(range.next())
-                    tmp = range.front();
+                    tmp = std::forward<range_value_type>(range.front());
                 if (!static_cast<bool>(tmp))
                     throw utl::Exception("range is empty");
-                return std::move(*tmp);
+                return std::forward<range_value_type>(*tmp);
             }
         };
 
@@ -1293,10 +1297,10 @@ namespace linq
 
                 cache_type tmp;
                 while(range.next())
-                    tmp = range.front();
+                    tmp = std::forward<range_value_type>(range.front());
                 if (!static_cast<bool>(tmp))
                     return value_type();
-                return std::move(*tmp);
+                return std::forward<range_value_type>(*tmp);
             }
         };
 

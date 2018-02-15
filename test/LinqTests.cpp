@@ -18,6 +18,21 @@ namespace linq_tests
             { }
     };
 
+    struct TestData2
+    {
+        int value;
+        std::string name;
+
+        TestData2() :
+            value(0)
+            { }
+
+        TestData2(int v, const std::string& s) :
+            value(v),
+            name (s)
+            { }
+    };
+
     struct TestDataMany
     {
         std::vector<int> values;
@@ -327,6 +342,23 @@ TEST(LinqTest, single)
     EXPECT_ANY_THROW(from_container(data) >> single());
 }
 
+TEST(LinqTest, single_with_struct)
+{
+    std::vector<TestData2> data({ 
+        { 4, "name1" },
+    });
+
+    {
+    auto d = from_container(data) >> single();
+    EXPECT_EQ(4, d.value);
+    EXPECT_EQ("name1", d.name);
+
+    ASSERT_EQ(1, data.size());
+    EXPECT_EQ(4, data[0].value);
+    EXPECT_EQ("name1", data[0].name);
+    }
+}
+
 TEST(LinqTest, single_or_default)
 {
     std::vector<int> data({ 4, 5, 6, 7, 8 });
@@ -335,6 +367,42 @@ TEST(LinqTest, single_or_default)
     EXPECT_EQ(9, from_container(data) >> single_or_default());
     data.clear();
     EXPECT_EQ(0, from_container(data) >> single_or_default());
+}
+
+TEST(LinqTest, single_or_default_with_struct)
+{
+    std::vector<TestData2> data({ 
+        { 4, "name1" },
+    });
+
+    {
+    auto d = from_container(data) >> single_or_default();
+    EXPECT_EQ(4, d.value);
+    EXPECT_EQ("name1", d.name);
+
+    ASSERT_EQ(1, data.size());
+    EXPECT_EQ(4, data[0].value);
+    EXPECT_EQ("name1", data[0].name);
+    }
+
+    data.emplace_back(5, "name2");
+    {
+        auto d = from_container(data) >> single_or_default();
+
+        EXPECT_EQ(0, d.value);
+        EXPECT_EQ("", d.name);
+
+        ASSERT_EQ(2, data.size());
+        EXPECT_EQ(4, data[0].value);
+        EXPECT_EQ("name1", data[0].name);
+    }
+
+    data.clear();
+    {
+        auto d = from_container(data) >> single_or_default();
+        EXPECT_EQ(0, d.value);
+        EXPECT_EQ("", d.name);
+    }
 }
 
 TEST(LinqTest, first)
@@ -347,6 +415,24 @@ TEST(LinqTest, first)
     EXPECT_ANY_THROW(from_container(data) >> first());
 }
 
+TEST(LinqTest, first_with_struct)
+{
+    std::vector<TestData2> data({ 
+        { 4, "name1" },
+        { 5, "name2" },
+    });
+
+    {
+    auto d = from_container(data) >> first();
+    EXPECT_EQ(4, d.value);
+    EXPECT_EQ("name1", d.name);
+
+    ASSERT_EQ(2, data.size());
+    EXPECT_EQ(4, data[0].value);
+    EXPECT_EQ("name1", data[0].name);
+    }
+}
+
 TEST(LinqTest, first_or_default)
 {
     std::vector<int> data({ 4, 5, 6, 7, 8 });
@@ -357,6 +443,30 @@ TEST(LinqTest, first_or_default)
     EXPECT_EQ(0, from_container(data) >> first_or_default());
 }
 
+TEST(LinqTest, first_or_default_with_struct)
+{
+    std::vector<TestData2> data({ 
+        { 4, "name1" },
+        { 5, "name2" },
+    });
+
+    {
+    auto d = from_container(data) >> first_or_default();
+    EXPECT_EQ(4, d.value);
+    EXPECT_EQ("name1", d.name);
+
+    ASSERT_EQ(2, data.size());
+    EXPECT_EQ(4, data[0].value);
+    EXPECT_EQ("name1", data[0].name);
+    }
+
+    data.clear();
+    {
+    auto d = from_container(data) >> first_or_default();
+    EXPECT_EQ(0, d.value);
+    EXPECT_EQ("", d.name);
+    }
+}
 
 TEST(LinqTest, last)
 {
@@ -368,6 +478,24 @@ TEST(LinqTest, last)
     EXPECT_ANY_THROW(from_container(data) >> last());
 }
 
+TEST(LinqTest, last_with_struct)
+{
+    std::vector<TestData2> data({ 
+        { 4, "name1" },
+        { 5, "name2" },
+    });
+
+    {
+    auto d = from_container(data) >> last();
+    EXPECT_EQ(5, d.value);
+    EXPECT_EQ("name2", d.name);
+
+    ASSERT_EQ(2, data.size());
+    EXPECT_EQ(5, data[1].value);
+    EXPECT_EQ("name2", data[1].name);
+    }
+}
+
 TEST(LinqTest, last_or_default)
 {
     std::vector<int> data({ 4, 5, 6, 7, 8 });
@@ -376,6 +504,31 @@ TEST(LinqTest, last_or_default)
     EXPECT_EQ(9, from_container(data) >> last_or_default());
     data.clear();
     EXPECT_EQ(0, from_container(data) >> last_or_default());
+}
+
+TEST(LinqTest, last_or_default_with_struct)
+{
+    std::vector<TestData2> data({ 
+        { 4, "name1" },
+        { 5, "name2" },
+    });
+
+    {
+    auto d = from_container(data) >> last_or_default();
+    EXPECT_EQ(5, d.value);
+    EXPECT_EQ("name2", d.name);
+
+    ASSERT_EQ(2, data.size());
+    EXPECT_EQ(5, data[1].value);
+    EXPECT_EQ("name2", data[1].name);
+    }
+
+    data.clear();
+    {
+    auto d = from_container(data) >> last_or_default();
+    EXPECT_EQ(0, d.value);
+    EXPECT_EQ("", d.name);
+    }
 }
 
 TEST(LinqTest, to_vector)

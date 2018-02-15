@@ -1,3 +1,4 @@
+#if 0
 #include <gtest/gtest.h>
 
 #include "../src/cpputils/MetaProgramming.h"
@@ -337,3 +338,4 @@ TEST(MetaProgrammingTest, int_to_str)
     ASSERT_EQ ( decStr.str(), std::string("16") );
     ASSERT_EQ ( hexStr.str(), std::string("10") );
 }
+#endif

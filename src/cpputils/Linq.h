@@ -8,7 +8,7 @@
 #include "Misc.h"
 #include "Nullable.h"
 #include "Exception.h"
-#include "MetaProgramming.h"
+#include "mp/core.h"
 
 // #define LINQ_DEBUG
 
@@ -47,7 +47,7 @@ namespace linq
         };
 
         template<class T>
-        using mp_range_value_type = typename utl::mp_remove_ref<T>::value_type;
+        using mp_range_value_type = typename utl::mp::remove_ref<T>::value_type;
 
         /* helper types **************************************************************************/
         template<class T, class TPredicate>
@@ -116,7 +116,7 @@ namespace linq
         {
         public:
             using key_type              = TKey;
-            using clean_key_type        = utl::mp_remove_ref<key_type>;
+            using clean_key_type        = utl::mp::remove_ref<key_type>;
             using value_type            = TValue;
             using this_type             = lookup<key_type, value_type>;
             using wrapped_key_type      = utl::wrapper<key_type>;
@@ -670,7 +670,7 @@ namespace linq
             using this_type                 = where_range<range_type, predicate_type>;
             using range_value_type          = mp_range_value_type<range_type>;
             using predicate_return_type     = decltype(std::declval<predicate_type>()(std::declval<range_value_type>()));
-            using inner_range_type          = utl::mp_eval_if<
+            using inner_range_type          = utl::mp::eval_if<
                                                 std::is_base_of<tag_range, predicate_return_type>,
                                                 predicate_return_type,
                                                 mp_make_inner_range, predicate_return_type>;
@@ -875,7 +875,7 @@ namespace linq
             using range_type = TRange;
             using this_type  = default_if_empty_range<range_type, value_type>;
 
-            enum class State 
+            enum class State
             {
                 Init,
                 Iterate,
@@ -890,17 +890,17 @@ namespace linq
             inline value_type& front()
             {
                 assert(state != State::Init && state != State::Finish);
-                return (state == State::Empty 
+                return (state == State::Empty
                     ? value
                     : range.front());
-            } 
+            }
 
             inline bool next()
             {
                 switch(state)
                 {
                     case State::Init:
-                        
+
                         state = range.next()
                             ? State::Iterate
                             : State::Empty;
@@ -961,7 +961,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 // CAUTION: we want no reference to a range here, because the passed range may be destroyed before used in outer_range_type
-                using range_type = utl::mp_remove_ref<TRange>;
+                using range_type = utl::mp::remove_ref<TRange>;
                 return outer_range_type<range_type>(std::forward<TRange>(range));
             }
 
@@ -991,7 +991,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 // CAUTION: we want no reference to a range here, because the passed range may be destroyed before used in outer_range_type
-                using range_type = utl::mp_remove_ref<TRange>;
+                using range_type = utl::mp::remove_ref<TRange>;
                 return outer_range_type<range_type, predicate_type>(std::forward<TRange>(range), std::move(predicate));
             }
 
@@ -1025,7 +1025,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 // CAUTION: we want no reference to a range here, because the passed range may be destroyed before used in outer_range_type
-                using range_type = utl::mp_remove_ref<TRange>;
+                using range_type = utl::mp::remove_ref<TRange>;
                 return outer_range_type<range_type, predicate_0_type, predicate_1_type>(std::forward<range_type>(range), std::move(predicate0), std::move(predicate1));
             }
 
@@ -1052,13 +1052,13 @@ namespace linq
             using this_type  = default_if_empty_builder<value_type>;
 
             value_type value;
-            
+
             template<class TRange>
             inline auto build(TRange&& range) const
-            { 
+            {
                 // CAUTION: we want no reference to a range here, because the passed range may be destroyed before used in outer_range_type
-                using range_type = utl::mp_remove_ref<TRange>;
-                return default_if_empty_range_wrapper<range_type, T>(std::forward<range_type>(range), value); 
+                using range_type = utl::mp::remove_ref<TRange>;
+                return default_if_empty_range_wrapper<range_type, T>(std::forward<range_type>(range), value);
             }
 
             default_if_empty_builder(T&& t) :
@@ -1092,7 +1092,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using value_type  = mp_range_value_type<TRange>;
-                using return_type = utl::mp_clean_type<value_type>;
+                using return_type = utl::mp::clean_type<value_type>;
 
                 return_type sum = return_type();
                 while (range.next())
@@ -1107,7 +1107,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using value_type  = mp_range_value_type<TRange>;
-                using return_type = utl::mp_clean_type<value_type>;
+                using return_type = utl::mp::clean_type<value_type>;
 
                 return_type ret = std::numeric_limits<return_type>::max();
                 while (range.next())
@@ -1125,7 +1125,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using value_type  = mp_range_value_type<TRange>;
-                using return_type = utl::mp_clean_type<value_type>;
+                using return_type = utl::mp::clean_type<value_type>;
 
                 return_type ret = std::numeric_limits<return_type>::min();
                 while (range.next())
@@ -1193,7 +1193,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
-                using value_type       = utl::mp_remove_ref<range_value_type>;
+                using value_type       = utl::mp::remove_ref<range_value_type>;
                 if (!range.next())
                     return value_type();
                 auto ret = std::forward<range_value_type>(range.front());
@@ -1221,7 +1221,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
-                using value_type       = utl::mp_remove_ref<range_value_type>;
+                using value_type       = utl::mp::remove_ref<range_value_type>;
                 if (!range.next())
                     return value_type();
                 return std::forward<range_value_type>(range.front());
@@ -1292,7 +1292,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using range_value_type  = mp_range_value_type<TRange>;
-                using value_type        = utl::mp_remove_ref<range_value_type>;
+                using value_type        = utl::mp::remove_ref<range_value_type>;
                 using cache_type        = cache<value_type>;
 
                 cache_type tmp;
@@ -1312,7 +1312,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
-                using value_type       = utl::mp_remove_const<utl::mp_remove_ref<range_value_type>>;
+                using value_type       = utl::mp::remove_const<utl::mp::remove_ref<range_value_type>>;
                 using vector_type      = std::vector<value_type>;
 
                 vector_type ret;
@@ -1333,7 +1333,7 @@ namespace linq
             inline auto build(TRange&& range)
             {
                 using range_value_type = mp_range_value_type<TRange>;
-                using value_type       = utl::mp_remove_ref<range_value_type>;
+                using value_type       = utl::mp::remove_ref<range_value_type>;
                 using list_type        = std::list<value_type>;
 
                 list_type ret;
@@ -1360,7 +1360,7 @@ namespace linq
                 using range_value_type  = mp_range_value_type<range_type>;
                 using key_type          = decltype(std::declval<key_predicate_type>()(std::declval<range_value_type&>()));
                 using value_type        = decltype(std::declval<value_predicate_type>()(std::declval<range_value_type&>()));
-                using map_type          = std::map<utl::mp_remove_ref<key_type>, value_type>;
+                using map_type          = std::map<utl::mp::remove_ref<key_type>, value_type>;
 
                 map_type map;
                 while (range.next())
@@ -1535,7 +1535,7 @@ namespace linq
     template<class T>
     inline auto default_if_empty(T&& t)
         { return __impl::default_if_empty_builder<T>(std::forward<T>(t)); }
-        
+
     /* result generators */
     inline auto count()
         { return __impl::count_builder(); }

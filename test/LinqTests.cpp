@@ -344,7 +344,7 @@ TEST(LinqTest, single)
 
 TEST(LinqTest, single_with_struct)
 {
-    std::vector<TestData2> data({ 
+    std::vector<TestData2> data({
         { 4, "name1" },
     });
 
@@ -371,7 +371,7 @@ TEST(LinqTest, single_or_default)
 
 TEST(LinqTest, single_or_default_with_struct)
 {
-    std::vector<TestData2> data({ 
+    std::vector<TestData2> data({
         { 4, "name1" },
     });
 
@@ -417,7 +417,7 @@ TEST(LinqTest, first)
 
 TEST(LinqTest, first_with_struct)
 {
-    std::vector<TestData2> data({ 
+    std::vector<TestData2> data({
         { 4, "name1" },
         { 5, "name2" },
     });
@@ -445,7 +445,7 @@ TEST(LinqTest, first_or_default)
 
 TEST(LinqTest, first_or_default_with_struct)
 {
-    std::vector<TestData2> data({ 
+    std::vector<TestData2> data({
         { 4, "name1" },
         { 5, "name2" },
     });
@@ -480,7 +480,7 @@ TEST(LinqTest, last)
 
 TEST(LinqTest, last_with_struct)
 {
-    std::vector<TestData2> data({ 
+    std::vector<TestData2> data({
         { 4, "name1" },
         { 5, "name2" },
     });
@@ -508,7 +508,7 @@ TEST(LinqTest, last_or_default)
 
 TEST(LinqTest, last_or_default_with_struct)
 {
-    std::vector<TestData2> data({ 
+    std::vector<TestData2> data({
         { 4, "name1" },
         { 5, "name2" },
     });

@@ -8,6 +8,7 @@ If                          ( __COTIRE_INCLUDED )
 EndIf                       ( )
 Target_Link_Libraries       (
                                 test_cpputils
+                                cpputils
                                 gtest
                                 gmock
                                 gmock_main

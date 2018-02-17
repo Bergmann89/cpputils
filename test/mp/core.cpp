@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../../src/cpputils/mp/core.h"
+#include <cpputils/mp/core.h>
 
 using namespace ::utl::mp;
 

@@ -150,22 +150,21 @@ namespace linq {
             struct lookup_range : public tag_range
             {
                 using value_type = lookup::value_type;
-
-                enum class State
+                using state_type = enum class state
                 {
-                    Initialize,
-                    Iterating,
-                    Finished,
+                    initialize,
+                    iterating,
+                    finished,
                 };
 
-                values_type&  values;
-                size_t        current;
-                size_t        end;
-                State         state;
+                values_type&    values;
+                size_t          current;
+                size_t          end;
+                state_type      state;
 
                 inline value_type& front()
                 {
-                    assert(state == State::Iterating);
+                    assert(state == state_type::iterating);
                     assert(current < end);
                     return *values[current];
                 }
@@ -174,15 +173,15 @@ namespace linq {
                 {
                     switch (state)
                     {
-                        case State::Iterating:
+                        case state_type::iterating:
                         {
                             ++current;
                         }
 
-                        case State::Initialize:
+                        case state_type::initialize:
                         {
                             auto hasElements = (current < end);
-                            state = (hasElements ? State::Iterating : State::Finished);
+                            state = (hasElements ? state_type::iterating : state_type::finished);
                             return hasElements;
                         }
 
@@ -197,7 +196,7 @@ namespace linq {
                     values  (v),
                     current (c),
                     end     (e),
-                    state   (State::Initialize)
+                    state   (state_type::initialize)
                     { LINQ_CTOR(); }
 
                 inline lookup_range(const lookup_range& other) :
@@ -889,23 +888,22 @@ namespace linq {
             using value_type = T;
             using range_type = TRange;
             using this_type  = default_if_empty_range<range_type, value_type>;
-
-            enum class State
+            using state_type = enum class state
             {
-                Init,
-                Iterate,
-                Empty,
-                Finish
+                init,
+                iterate,
+                empty,
+                finish,
             };
 
             range_type range;
             value_type value;
-            State      state;
+            state_type state;
 
             inline value_type& front()
             {
-                assert(state != State::Init && state != State::Finish);
-                return (state == State::Empty
+                assert(state != state_type::init && state != state_type::finish);
+                return (state == state_type::empty
                     ? value
                     : range.front());
             }
@@ -914,23 +912,23 @@ namespace linq {
             {
                 switch(state)
                 {
-                    case State::Init:
+                    case state_type::init:
 
                         state = range.next()
-                            ? State::Iterate
-                            : State::Empty;
+                            ? state_type::iterate
+                            : state_type::empty;
                         return true;
 
-                    case State::Iterate:
+                    case state_type::iterate:
                         if (!range.next())
                         {
-                            state = State::Finish;
+                            state = state_type::finish;
                             return false;
                         }
                         return true;
 
-                    case State::Empty:
-                        state = State::Finish;
+                    case state_type::empty:
+                        state = state_type::finish;
                         /* fall through */
 
                     default:
@@ -942,7 +940,7 @@ namespace linq {
             inline default_if_empty_range(R&& r, X&& t) :
                 range(std::forward<R>(r)),
                 value(t),
-                state(State::Init)
+                state(state_type::init)
                 { LINQ_CTOR(); }
 
             inline default_if_empty_range(const default_if_empty_range& other) :

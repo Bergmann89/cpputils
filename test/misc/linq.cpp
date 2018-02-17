@@ -4,15 +4,15 @@
 
 namespace linq_tests
 {
-    struct TestData
+    struct test_data
     {
         int value;
 
-        TestData() :
+        test_data() :
             value(0)
             { }
 
-        TestData(int v) :
+        test_data(int v) :
             value(v)
             { }
     };
@@ -187,9 +187,9 @@ TEST(LinqTest, where)
 
 TEST(LinqTest, select)
 {
-    std::vector<TestData> data({ TestData(1), TestData(2), TestData(3) });
+    std::vector<test_data> data({ test_data(1), test_data(2), test_data(3) });
     auto range = from_container(data)
-        >>  select([](TestData& td)->int& {
+        >>  select([](test_data& td)->int& {
                 return td.value;
             });
     ASSERT_TRUE (range.next());
@@ -256,9 +256,9 @@ TEST(LinqTest, order_by)
 
 TEST(LinqTest, distinct)
 {
-    std::vector<TestData> data({ TestData(1), TestData(2), TestData(3), TestData(1), TestData(2), TestData(4) });
+    std::vector<test_data> data({ test_data(1), test_data(2), test_data(3), test_data(1), test_data(2), test_data(4) });
     auto range = from_container(data)
-        >>  distinct([](TestData& l, TestData& r){
+        >>  distinct([](test_data& l, test_data& r){
                 return l.value < r.value;
             });
     ASSERT_TRUE (range.next());
@@ -866,11 +866,11 @@ TEST(LinqTest, moveable_objects)
 
 TEST(LinqTest, const_objects)
 {
-    const TestData data[] = { TestData(1) };
+    const test_data data[] = { test_data(1) };
 
     {
     auto v = from_array(data)
-        >>  select([](const TestData& d) {
+        >>  select([](const test_data& d) {
                 return d;
             })
         >>  first();
@@ -879,7 +879,7 @@ TEST(LinqTest, const_objects)
 
     {
     auto v = from_array(data)
-        >>  select([](const TestData& d) {
+        >>  select([](const test_data& d) {
                 return d;
             })
         >>  first_or_default();
@@ -888,7 +888,7 @@ TEST(LinqTest, const_objects)
 
     {
     auto v = from_array(data)
-        >>  select([](const TestData& d) {
+        >>  select([](const test_data& d) {
                 return std::move(d);
             })
         >>  last();
@@ -897,7 +897,7 @@ TEST(LinqTest, const_objects)
 
     {
     auto v = from_array(data)
-        >>  select([](const TestData& d) {
+        >>  select([](const test_data& d) {
                 return d;
             })
         >>  last_or_default();
@@ -906,7 +906,7 @@ TEST(LinqTest, const_objects)
 
     {
     auto v = from_array(data)
-        >>  select([](const TestData& d) {
+        >>  select([](const test_data& d) {
                 return d;
             })
         >>  single();
@@ -915,7 +915,7 @@ TEST(LinqTest, const_objects)
 
     {
     auto v = from_array(data)
-        >>  select([](const TestData& d) {
+        >>  select([](const test_data& d) {
                 return d;
             })
         >>  single_or_default();
@@ -924,7 +924,7 @@ TEST(LinqTest, const_objects)
 
     {
     auto v = from_array(data)
-        >>  select([](const TestData& d) {
+        >>  select([](const test_data& d) {
                 return d;
             })
         >>  to_list();

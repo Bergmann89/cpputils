@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 #include <cpputils/container/nullable.h>
 
-struct TestData
+struct test_data
 {
     static int ctorCount;
     static int dtorCount;
 
-    TestData()
+    test_data()
         { ++ctorCount; }
 
-     ~TestData()
+     ~test_data()
         { ++dtorCount; }
 };
 
@@ -31,11 +31,11 @@ struct NonCopyableTestData
 using NullableInt                 = utl::nullable<int>;
 using NullableIntRef              = utl::nullable<int&>;
 using NullableString              = utl::nullable<std::string>;
-using NullableTestData            = utl::nullable<TestData>;
+using NullableTestData            = utl::nullable<test_data>;
 using NullableNonCopyableTestData = utl::nullable<NonCopyableTestData>;
 
-int TestData::ctorCount = 0;
-int TestData::dtorCount = 0;
+int test_data::ctorCount = 0;
+int test_data::dtorCount = 0;
 
 using namespace ::utl;
 using namespace ::testing;
@@ -111,12 +111,12 @@ TEST(NullableTest, hasValue_operatorBool)
 
 TEST(NullableTest, reset)
 {
-    NullableTestData n(TestData{});
+    NullableTestData n(test_data{});
     EXPECT_TRUE (n.has_value());
-    int tmp = TestData::dtorCount;
+    int tmp = test_data::dtorCount;
     n.reset();
     EXPECT_FALSE(n.has_value());
-    EXPECT_EQ   (tmp + 1, TestData::dtorCount);
+    EXPECT_EQ   (tmp + 1, test_data::dtorCount);
 }
 
 TEST(NullableTest, value_functor)

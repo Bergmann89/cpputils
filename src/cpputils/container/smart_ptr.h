@@ -1,8 +1,8 @@
 #pragma once
 
 #include <memory>
-#include "MetaProgramming.h"
-#include "exception.h"
+#include <cpputils/misc/exception.h>
+#include <cpputils/mp/core.h>
 
 namespace utl
 {
@@ -12,26 +12,26 @@ namespace utl
     {
     private:
         template<class Tt_base, class Tt_derived>
-        using cop_is_base_of = std::is_base_of<utl::mp_clean_type<Tt_base>, utl::mp_clean_type<Tt_derived>>;
+        using cop_is_base_of = std::is_base_of<mp::clean_type<Tt_base>, mp::clean_type<Tt_derived>>;
 
         template<class X, class Enable = void>
         struct __impl_cop_is_value :
-            public utl::mp_true { };
+            public mp::c_true { };
 
         template<class X>
         struct __impl_cop_is_value<X*, void> :
-            public utl::mp_false { };
+            public mp::c_false { };
 
         template<template<class> class F, class X>
-        struct __impl_cop_is_value<F<X>, utl::mp_enable_if<cop_is_base_of<smart_ptr<X>, F<X>>>> :
-            public utl::mp_false { };
+        struct __impl_cop_is_value<F<X>, mp::enable_if<cop_is_base_of<smart_ptr<X>, F<X>>>> :
+            public mp::c_false { };
 
         template<class X>
         struct __impl_cop_is_value<std::reference_wrapper<X>, void> :
-            public utl::mp_false { };
+            public mp::c_false { };
 
         template<class X>
-        using cop_is_value = __impl_cop_is_value<utl::mp_clean_type<X>>;
+        using cop_is_value = __impl_cop_is_value<mp::clean_type<X>>;
 
         struct op_deleter_noop
             { inline void operator()(T*) { } };
@@ -78,35 +78,35 @@ namespace utl
             return *this;
         }
 
-        template<class X = T, utl::mp_enable_if_c<cop_is_value<X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<cop_is_value<X>::value, int> = 0>
         inline smart_ptr& reset(X& x)
         {
             _value.reset(new X(x));
             return *this;
         }
 
-        template<class X = T, utl::mp_enable_if_c<cop_is_value<X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<cop_is_value<X>::value, int> = 0>
         inline smart_ptr& reset(X&& x)
         {
             _value.reset(new X(std::move(x)));
             return *this;
         }
 
-        template<class X = T, utl::mp_enable_if_c<cop_is_base_of<T, X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<cop_is_base_of<T, X>::value, int> = 0>
         inline smart_ptr& reset(const smart_ptr<X>& other)
         {
             _value = other._value;
             return *this;
         }
 
-        template<class X = T, utl::mp_enable_if_c<cop_is_base_of<T, X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<cop_is_base_of<T, X>::value, int> = 0>
         inline smart_ptr& reset(smart_ptr<X>&& other)
         {
             _value = std::move(other._value);
             return *this;
         }
 
-        template<class X = T, utl::mp_enable_if_c<cop_is_base_of<T, X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<cop_is_base_of<T, X>::value, int> = 0>
         inline smart_ptr& reset(std::reference_wrapper<X>&& ref)
         {
             _value.reset(&ref.get(), op_deleter_noop());
@@ -127,32 +127,32 @@ namespace utl
         smart_ptr()
             { }
 
-        template<class X = T, utl::mp_enable_if_c<cop_is_value<X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<cop_is_value<X>::value, int> = 0>
         smart_ptr(X& x) :
             _value(new X(x))
             { }
 
-        template<class X = T, utl::mp_enable_if_c<cop_is_value<X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<cop_is_value<X>::value, int> = 0>
         smart_ptr(X&& x) :
             _value(new X(std::move(x)))
             { }
 
-        template<class X = T, utl::mp_enable_if_c<std::is_base_of<T, X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<std::is_base_of<T, X>::value, int> = 0>
         smart_ptr(X* x) :
             _value(x)
             { }
 
-        template<class X = T, utl::mp_enable_if_c<std::is_base_of<T, X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<std::is_base_of<T, X>::value, int> = 0>
         smart_ptr(const smart_ptr<X>& other) :
             _value(other._value)
             { }
 
-        template<class X = T, utl::mp_enable_if_c<std::is_base_of<T, X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<std::is_base_of<T, X>::value, int> = 0>
         smart_ptr(smart_ptr<X>&& other) :
             _value(std::move(other._value))
             { }
 
-        template<class X = T, utl::mp_enable_if_c<std::is_base_of<T, X>::value, int> = 0>
+        template<class X = T, mp::enable_if_c<std::is_base_of<T, X>::value, int> = 0>
         smart_ptr(std::reference_wrapper<X>&& ref) :
             _value(&ref.get(), op_deleter_noop())
             { }

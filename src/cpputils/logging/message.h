@@ -3,7 +3,7 @@
 namespace utl {
 namespace logging {
 
-    struct log_message
+    struct message
     {
     private:
         std::ostringstream _msg;
@@ -13,29 +13,29 @@ namespace logging {
             { return _msg.str(); }
 
         template <typename T>
-        inline log_message& operator <<(const T& value)
+        inline message& operator <<(const T& value)
         {
             _msg << value;
             return *this;
         }
 
-        inline log_message& operator <<(std::ostream& (*callback)(std::ostream&))
+        inline message& operator <<(std::ostream& (*callback)(std::ostream&))
         {
             callback(_msg);
             return *this;
         }
 
-        log_message() :
+        message() :
             _msg()
             { }
 
-        log_message(const std::string& msg) :
+        message(const std::string& msg) :
             _msg(msg)
             { }
 
     private:
-        log_message(log_message&&) = delete;
-        log_message(const log_message&) = delete;
+        message(message&&) = delete;
+        message(const message&) = delete;
     };
 
 }

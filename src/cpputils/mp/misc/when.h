@@ -24,7 +24,7 @@ namespace mp {
     {
         template<typename...>
         struct wrong_impl :
-            public c_false
+            public c_false_t
             { };
    }
 

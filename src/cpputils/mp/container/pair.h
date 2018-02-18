@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cpputils/mp/core.h>
-#include <cpputils/mp/util/make.h>
-#include <cpputils/mp/util/tag_of.h>
+#include <cpputils/mp/misc/make.h>
+#include <cpputils/mp/misc/tag_of.h>
 #include <cpputils/mp/intern/ebo.h>
 #include <cpputils/mp/intern/operators_orderable.h>
 #include <cpputils/mp/intern/operators_comparable.h>
@@ -33,6 +33,7 @@ namespace mp {
         private intern::ebo<__impl::pair_index<0>, First>,
         private intern::ebo<__impl::pair_index<1>, Second>
     {
+        using tag       = tag_pair;
         using this_type = pair<First, Second>;
 
         // default constructor

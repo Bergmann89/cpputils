@@ -2,7 +2,7 @@
 
 #include <utility>
 #include <cpputils/mp/core/conditionals.h>
-#include <cpputils/mp/util/tag_of.h>
+#include <cpputils/mp/misc/tag_of.h>
 #include <cpputils/mp/operations/compare/less.h>
 #include <cpputils/mp/operations/compare/less_equal.h>
 #include <cpputils/mp/operations/compare/greater.h>

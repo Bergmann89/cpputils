@@ -16,19 +16,19 @@ namespace utl
 
         template<class X, class Enable = void>
         struct __impl_cop_is_value :
-            public mp::c_true { };
+            public mp::c_true;
 
         template<class X>
         struct __impl_cop_is_value<X*, void> :
-            public mp::c_false { };
+            public mp::c_false;
 
         template<template<class> class F, class X>
         struct __impl_cop_is_value<F<X>, mp::enable_if<cop_is_base_of<smart_ptr<X>, F<X>>>> :
-            public mp::c_false { };
+            public mp::c_false;
 
         template<class X>
         struct __impl_cop_is_value<std::reference_wrapper<X>, void> :
-            public mp::c_false { };
+            public mp::c_false;
 
         template<class X>
         using cop_is_value = __impl_cop_is_value<mp::clean_type<X>>;

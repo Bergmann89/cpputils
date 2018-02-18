@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cpputils/mp/core/const.h>
-#include <cpputils/mp/util/when.h>
-#include <cpputils/mp/util/tag_of.h>
-#include <cpputils/mp/util/default.h>
+#include <cpputils/mp/misc/when.h>
+#include <cpputils/mp/misc/tag_of.h>
+#include <cpputils/mp/misc/default.h>
 #include <cpputils/mp/intern/has_value.h>
 #include <cpputils/mp/intern/comparable_less.h>
 #include <cpputils/mp/operations/if.h>
@@ -36,7 +36,7 @@ namespace mp {
         {
             template <typename ...Args>
             static constexpr auto apply(Args&& ...)
-                { return c_false { }; }
+                { return c_false; }
         };
 
         template <typename T, typename U>
@@ -55,7 +55,7 @@ namespace mp {
             {
                 constexpr auto eq          = less(value<X>(), value<Y>());
                 constexpr bool truth_value = if_  (eq, true, false);
-                return c_bool<truth_value> { };
+                return c_bool_t<truth_value> { };
             }
         };
 

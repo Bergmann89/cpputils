@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cpputils/mp/core/modifier.h>
-#include <cpputils/mp/util/when.h>
+#include <cpputils/mp/misc/when.h>
 
 namespace utl {
 namespace mp {

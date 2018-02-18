@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cpputils/mp/core/const.h>
-#include <cpputils/mp/util/when.h>
-#include <cpputils/mp/util/tag_of.h>
-#include <cpputils/mp/util/default.h>
+#include <cpputils/mp/misc/when.h>
+#include <cpputils/mp/misc/tag_of.h>
+#include <cpputils/mp/misc/default.h>
 #include <cpputils/mp/operations/logical/not.h>
 #include <cpputils/mp/operations/compare/less.h>
 

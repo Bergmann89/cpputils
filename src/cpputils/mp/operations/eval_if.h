@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cpputils/mp/util/when.h>
-#include <cpputils/mp/util/tag_of.h>
-#include <cpputils/mp/util/default.h>
+#include <cpputils/mp/misc/when.h>
+#include <cpputils/mp/misc/tag_of.h>
+#include <cpputils/mp/misc/default.h>
 #include <cpputils/mp/intern/has_value.h>
 #include <cpputils/mp/operations/if.fwd.h>
 #include <cpputils/mp/operations/eval.h>
@@ -51,11 +51,11 @@ namespace mp {
         struct eval_if_impl<T, when<intern::has_value<T>::value>>
         {
             template<typename Then, typename Else>
-            static constexpr auto eval_if_helper(c_true, Then&& t, Else&& e)
+            static constexpr auto eval_if_helper(c_true_t, Then&& t, Else&& e)
                 { return eval(std::forward<Then>(t)); }
 
             template<typename Then, typename Else>
-            static constexpr auto eval_if_helper(c_false, Then&& t, Else&& e)
+            static constexpr auto eval_if_helper(c_false_t, Then&& t, Else&& e)
                 { return eval(std::forward<Else>(e)); }
 
             template <typename Cond, typename Then, typename Else>
@@ -63,7 +63,7 @@ namespace mp {
             {
                 constexpr auto cond = value<Cond>();
                 constexpr bool truth_value = if_(cond, true, false);
-                return eval_if_helper(c_bool<truth_value> { }, std::forward<Then>(t), std::forward<Else>(e));
+                return eval_if_helper(c_bool_t<truth_value> { }, std::forward<Then>(t), std::forward<Else>(e));
             }
         };
 

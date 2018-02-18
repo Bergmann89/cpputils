@@ -1,4 +1,4 @@
-#include <cpputils/mp/util/tag_of.h>
+#include <cpputils/mp/misc/tag_of.h>
 
 namespace test_mp_util_tag_of
 {

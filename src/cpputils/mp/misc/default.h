@@ -20,12 +20,12 @@ namespace mp {
 
         template<typename T, typename>
         struct is_default_impl :
-            public c_false
+            public c_false_t
             { };
 
         template<typename T>
         struct is_default_impl<T, decltype((void)static_cast<default_>(std::declval<T>()))> :
-            public c_true
+            public c_true_t
             { };
    }
 

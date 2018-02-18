@@ -2,8 +2,8 @@
 #pragma once
 
 #include <utility>
-#include <cpputils/mp/util/when.h>
-#include <cpputils/mp/util/default.h>
+#include <cpputils/mp/misc/when.h>
+#include <cpputils/mp/misc/default.h>
 
 namespace utl {
 namespace mp {

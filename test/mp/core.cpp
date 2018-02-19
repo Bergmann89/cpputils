@@ -21,3 +21,10 @@ static_assert(std::is_same<eval_if_expected_0, eval_if_actual_0>::value, "eval_i
 using eval_if_expected_1 = int*;
 using eval_if_actual_1   = eval_if_c<false, int, add_pointer, int>;
 static_assert(std::is_same<eval_if_expected_1, eval_if_actual_1>::value, "");
+
+/* is_specializatzion_of */
+template<class T, class U>
+struct my_template { };
+using spec_template = my_template<int, double>;
+static_assert(is_specialization_of<spec_template, my_template>::value, "");
+static_assert(!is_specialization_of<int, my_template>::value, "");

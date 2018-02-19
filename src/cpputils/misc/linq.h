@@ -50,17 +50,6 @@ namespace linq {
         struct tag_builder { };
 
         /* meta programming **********************************************************************/
-        template<class TArray>
-        struct mp_array_properties;
-
-        template<class T, size_t N>
-        struct mp_array_properties<T[N]>
-        {
-            using size          = std::integral_constant<size_t, N>;
-            using value_type    = T;
-            using iterator_type = T*;
-        };
-
         template<class T>
         using mp_range_value_type = typename utl::mp::remove_ref<T>::value_type;
 
@@ -1510,7 +1499,7 @@ namespace linq {
     inline auto from_array(TArray&& array)
     {
         using array_type = typename std::remove_reference<TArray>::type;
-        using array_size = typename __impl::mp_array_properties<array_type>::size;
+        using array_size = typename utl::mp::array_properties<array_type>::size;
         return from_iterator(&array[0], &array[array_size::value]);
     }
 

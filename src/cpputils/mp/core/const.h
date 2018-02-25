@@ -6,15 +6,8 @@
 namespace utl {
 namespace mp {
 
-    template<typename T>
-    struct tag_integral_constant { };
-
     template<typename T, T t>
-    struct integral_constant :
-        public std::integral_constant<T, t>
-    {
-        using tag = tag_integral_constant<T>;
-    };
+    using integral_constant = std::integral_constant<T, t>;
 
     template<bool B>
     using c_bool_t = integral_constant<bool, B>;

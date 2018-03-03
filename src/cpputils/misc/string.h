@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <cpputils/misc/exception.h>
+#include <cpputils/misc/type_helper.h>
 
 namespace utl
 {
@@ -135,7 +136,7 @@ namespace utl
     {
         T tmp;
         if (!try_from_string<T>(s, tmp))
-            throw exception(std::string("unable to convert string to specific value: ") + s);
+            throw exception(std::string("unable to convert string to ") + type_helper<T>::name() + ": " + s);
         return tmp;
     }
 

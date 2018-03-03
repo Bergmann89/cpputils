@@ -2,14 +2,13 @@
 
 #include <cpputils/misc/exception.h>
 #include <cpputils/logging/types.h>
-#include <cpputils/logging/message.h>
 
 // () mandatory
 // [] optional
 // (logger), (LogLevel: debug|info|warn|error), [Sender], [Message, [Arguments]]
 #define log_message(logger, level, ...) \
     if (logger.is_enabled(::utl::logging::log_level::level)) \
-        logger.make_log_helper(::utl::logging::log_level::level, __FILE__, __LINE__, ## __VA_ARGS__ ) = ::utl::logging::message()
+        logger.make_log_helper(::utl::logging::log_level::level, __FILE__, __LINE__, ## __VA_ARGS__ ) = std::ostringstream()
 
 namespace utl {
 namespace logging {
@@ -24,8 +23,12 @@ namespace logging {
             data_ptr_s  _data;
 
         public:
-            inline void operator=(const message& msg)
-                { _data->message += msg.str(); }
+            inline void operator=(const std::ostream& os)
+            {
+                auto* msg = dynamic_cast<const std::ostringstream*>(&os);
+                if (msg)
+                    _data->message += msg->str();
+            }
 
             inline helper(logger& logger, data_ptr_s data) :
                 _logger (logger),

@@ -5,7 +5,7 @@
 namespace utl
 {
 
-    template<class T>
+    template<typename T>
     struct type_helper
     {
     public:
@@ -16,5 +16,19 @@ namespace utl
             return std::string(name ? name : typeid(T).name());
         }
     };
+
+    template<typename...>
+    struct unique_counter
+    {
+        static size_t& next()
+        {
+            static size_t value { };
+            return ++value;
+        }
+    };
+
+    template<typename... X>
+    struct unique_id
+        {   static const size_t value = unique_counter<X...>::next(); };
 
 }

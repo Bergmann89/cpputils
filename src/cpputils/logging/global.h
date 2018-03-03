@@ -8,7 +8,7 @@
 // (LogLevel: debug|info|warn|error), [T_sender], [Message, [Arguments]]
 #define log_global_message(level, ...) \
     if (::utl::logging::is_enabled(::utl::logging::log_level::level)) \
-        ::utl::logging::make_log_helper(::utl::logging::log_level::level, __FILE__, __LINE__, ## __VA_ARGS__ ) = ::utl::logging::message()
+        ::utl::logging::make_log_helper(::utl::logging::log_level::level, __FILE__, __LINE__, ## __VA_ARGS__ ) = std::ostringstream()
 
 namespace utl {
 namespace logging {

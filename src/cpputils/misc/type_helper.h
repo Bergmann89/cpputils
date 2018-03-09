@@ -27,8 +27,8 @@ namespace utl
         }
     };
 
-    template<typename... X>
+    template<typename T_counter, typename... X>
     struct unique_id
-        {   static const size_t value = unique_counter<X...>::next(); };
+        { static const size_t value = unique_counter<T_counter>::next(); };
 
 }

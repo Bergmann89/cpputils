@@ -7,17 +7,31 @@ namespace utl {
 namespace mp {
 
     template<typename T, T t>
-    using integral_constant = std::integral_constant<T, t>;
+    struct integral_constant 
+        : std::integral_constant<T, t>
+        { };
 
     template<bool B>
-    using c_bool_t = integral_constant<bool, B>;
+    struct c_bool_t
+        : integral_constant<bool, B>
+        { };
 
     template<size_t S>
-    using c_size_t = integral_constant<size_t, S>;
+    struct c_size_t 
+        : integral_constant<size_t, S>
+        { };
 
-    using c_zero_t  = c_size_t<0>;
-    using c_true_t  = c_bool_t<true>;
-    using c_false_t = c_bool_t<false>;
+    struct c_zero_t 
+        : c_size_t<0>
+        { };
+
+    struct c_true_t 
+        : c_bool_t<true>
+        { };
+
+    struct c_false_t 
+        : c_bool_t<false>
+        { };
 
     template<size_t S>
     constexpr c_size_t<S> c_size { };

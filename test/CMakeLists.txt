@@ -15,9 +15,21 @@ Target_Link_Libraries       (
                                 pthread
                             )
 
-Add_Custom_Target           ( run_test_cpputils DEPENDS test_cpputils COMMAND ./test_cpputils )
+# Build Tests #####################################################################################
+
+If                          ( NOT TARGET build_tests)
+    Add_Custom_Target           ( build_tests )
+EndIf                       ( )
+Add_Dependencies            ( build_tests test_cpputils )
+
+# Run Tests #######################################################################################
 
 If                          ( NOT TARGET tests)
     Add_Custom_Target           ( tests )
 EndIf                       ( )
+Add_Custom_Target           ( run_test_cpputils DEPENDS test_cpputils COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_cpputils )
 Add_Dependencies            ( tests run_test_cpputils )
+
+# CTest ###########################################################################################
+
+Add_Test                    ( NAME cpputils COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_cpputils )

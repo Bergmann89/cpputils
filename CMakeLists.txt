@@ -5,9 +5,15 @@ If                          ( NOT CMAKE_BUILD_TYPE )
 EndIf                       ( NOT CMAKE_BUILD_TYPE )
 
 CMake_Minimum_Required      ( VERSION 3.5.1 FATAL_ERROR )
-Set                         ( CMAKE_CXX_STANDARD 14 )
+Set                         ( CMAKE_CXX_STANDARD 17 )
+Set                         ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../../../inc/cmake/")
 Include                     ( GlobalCompilerFlags OPTIONAL )
 Include                     ( cotire OPTIONAL )
+
+# Tests ###########################################################################################
+
+Include                     ( CTest )
+Enable_Testing              ( )
 
 # Projects ########################################################################################
 

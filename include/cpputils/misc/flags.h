@@ -6,50 +6,58 @@
 
 namespace utl
 {
-    template<class TEnum, class TBase>
+    template<class T_enum, class T_base>
     struct op_flag_convert_none
     {
-        static inline TBase to_base(const TEnum e)
-            { return static_cast<TBase>(e); }
+        static inline T_base to_base(const T_enum e)
+            { return static_cast<T_base>(e); }
     };
 
-    template<class TEnum, class TBase>
+    template<class T_enum, class T_base>
     struct op_flag_convert_shift
     {
-        static inline TBase to_base(const TEnum e)
-            { return static_cast<TBase>(1 << static_cast<int>(e)); }
+        static inline T_base to_base(const T_enum e)
+            { return static_cast<T_base>(1 << static_cast<int>(e)); }
     };
 
     template<
-        class TEnum,
-        class TBase = typename std::underlying_type<TEnum>::type,
-        class Op    = op_flag_convert_none<TEnum, TBase>>
+        class T_enum,
+        class T_base = typename std::underlying_type<T_enum>::type,
+        class T_op   = op_flag_convert_none<T_enum, T_base>>
     struct flags
     {
     public:
-        TBase value;
+        using enum_type = T_enum;
+        using base_type = T_base;
+        using op_type   = T_op;
 
     public:
-        inline bool is_set(TEnum e) const
-            { return static_cast<bool>(value & Op::to_base(e)); }
+        base_type value;
 
-        inline void set(TEnum e)
-            { value = static_cast<TBase>(value | Op::to_base(e)); }
+    public:
+        inline bool is_set(enum_type e) const
+            { return static_cast<bool>(value & op_type::to_base(e)); }
 
-        inline void clear(TEnum e)
-            { value = static_cast<TBase>(value & ~Op::to_base(e)); }
+        inline void set(enum_type e)
+            { value = static_cast<base_type>(value | op_type::to_base(e)); }
+
+        inline void clear(enum_type e)
+            { value = static_cast<base_type>(value & ~op_type::to_base(e)); }
 
         inline void reset()
             { value = 0; }
 
     public:
-        TBase operator()() const
+        base_type operator()() const
             { return value; }
 
-        operator bool() const
+        operator base_type() const
             { return static_cast<bool>(value); }
 
-        bool operator[](TEnum e) const
+        explicit operator bool() const
+            { return static_cast<bool>(value); }
+
+        bool operator[](enum_type e) const
             { return is_set(e); }
 
     public:
@@ -57,19 +65,19 @@ namespace utl
             value(0)
             { }
 
-        explicit flags(TBase v) :
+        explicit flags(base_type v) :
             value(v)
             { }
 
-        flags(TEnum e) :
-            value(Op::to_base(e))
+        flags(enum_type e) :
+            value(T_op::to_base(e))
             { }
 
         flags(const flags& other) :
             value(other.value)
             { }
 
-        flags(std::initializer_list<TEnum> list) :
+        flags(std::initializer_list<enum_type> list) :
             flags()
         {
             for (auto& e : list)
@@ -85,19 +93,19 @@ namespace utl
 
         static inline const flags& all()
         {
-            static const flags value(std::numeric_limits<TBase>::max());
+            static const flags value(std::numeric_limits<base_type>::max());
             return value;
         }
     };
 
     template<
-        class TEnum,
-        class TBase = typename std::underlying_type<TEnum>::type>
-    using shifted_flags = flags<TEnum, TBase, op_flag_convert_shift<TEnum, TBase>>;
+        class T_enum,
+        class T_base = typename std::underlying_type<T_enum>::type>
+    using shifted_flags = flags<T_enum, T_base, op_flag_convert_shift<T_enum, T_base>>;
 
     template<
-        class TEnum,
-        class TBase = typename std::underlying_type<TEnum>::type>
-    using simple_flags = flags<TEnum, TBase, op_flag_convert_none<TEnum, TBase>>;
+        class T_enum,
+        class T_base = typename std::underlying_type<T_enum>::type>
+    using simple_flags = flags<T_enum, T_base, op_flag_convert_none<T_enum, T_base>>;
 
 }

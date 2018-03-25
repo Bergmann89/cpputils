@@ -29,7 +29,7 @@ namespace mp {
     }
 
     template<typename T, typename S>
-    struct is_same 
+    struct is_same
         : c_bool_t<std::is_same<T, S>::value>
         { };
 

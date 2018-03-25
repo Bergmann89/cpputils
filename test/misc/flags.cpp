@@ -70,3 +70,27 @@ TEST(flagsTest, reset)
     f.reset();
     EXPECT_FALSE(static_cast<bool>(f));
 }
+
+TEST(flagsTest, iterator)
+{
+    Testflags f({ TestFlag::value1, TestFlag::value3 });
+    auto it  = f.begin();
+    auto end = f.end();
+
+    EXPECT_FALSE(it == end);
+    EXPECT_TRUE (it != end);
+    EXPECT_EQ   (TestFlag::value1, *it);
+    ++it;
+
+    EXPECT_FALSE(it == end);
+    EXPECT_TRUE (it != end);
+    EXPECT_EQ   (TestFlag::value3, *it);
+    ++it;
+
+    EXPECT_TRUE (it == end);
+    EXPECT_FALSE(it != end);
+    ++it;
+
+    EXPECT_TRUE (it == end);
+    EXPECT_FALSE(it != end);
+}

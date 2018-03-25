@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <cassert>
 #include <type_traits>
 #include <initializer_list>
 
@@ -9,15 +10,21 @@ namespace utl
     template<class T_enum, class T_base>
     struct op_flag_convert_none
     {
-        static inline T_base to_base(const T_enum e)
+        static inline T_base to_base(const T_enum& e)
             { return static_cast<T_base>(e); }
+
+        static inline T_enum from_index(const size_t& index)
+            { return static_cast<T_enum>(1 << index); }
     };
 
     template<class T_enum, class T_base>
     struct op_flag_convert_shift
     {
-        static inline T_base to_base(const T_enum e)
+        static inline T_base to_base(const T_enum& e)
             { return static_cast<T_base>(1 << static_cast<int>(e)); }
+
+        static inline T_enum from_index(const size_t& index)
+            { return static_cast<T_enum>(index); }
     };
 
     template<
@@ -30,6 +37,57 @@ namespace utl
         using enum_type = T_enum;
         using base_type = T_base;
         using op_type   = T_op;
+
+    public:
+        struct iterator
+        {
+        private:
+            static constexpr size_t bit_count = 8 * sizeof(base_type);
+
+            base_type   _base;
+            size_t      _pos;
+
+            inline void next()
+            {
+                if (_pos >= bit_count)
+                    return;
+                do
+                {
+                    ++_pos;
+                } while(_pos < bit_count && !static_cast<bool>(_base & (1 << _pos)));
+            }
+
+        public:
+            iterator(const base_type& base, bool is_end)
+                : _base(base)
+                , _pos (is_end ? bit_count : 0)
+                { next(); }
+
+            inline bool operator == (const iterator& other) const
+                { return _base == other._base && _pos == other._pos; }
+
+            inline bool operator != (const iterator& other) const
+                { return _base != other._base || _pos != other._pos; }
+
+            inline enum_type operator * () const
+            {
+                assert(_pos < bit_count);
+                return op_type::from_index(_pos);
+            }
+
+            inline iterator& operator ++ ()
+            {
+                next();
+                return *this;
+            }
+
+            inline iterator operator ++ (int)
+            {
+                auto ret = *this;
+                next();
+                return ret;
+            }
+        };
 
     public:
         base_type value;
@@ -46,6 +104,12 @@ namespace utl
 
         inline void reset()
             { value = 0; }
+
+        inline auto begin() const
+            { return iterator(value, false); }
+
+        inline auto end() const
+            { return iterator(value, true); }
 
     public:
         base_type operator()() const

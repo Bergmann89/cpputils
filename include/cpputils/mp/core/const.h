@@ -7,7 +7,7 @@ namespace utl {
 namespace mp {
 
     template<typename T, T t>
-    struct integral_constant 
+    struct integral_constant
         : std::integral_constant<T, t>
         { };
 
@@ -17,19 +17,19 @@ namespace mp {
         { };
 
     template<size_t S>
-    struct c_size_t 
+    struct c_size_t
         : integral_constant<size_t, S>
         { };
 
-    struct c_zero_t 
+    struct c_zero_t
         : c_size_t<0>
         { };
 
-    struct c_true_t 
+    struct c_true_t
         : c_bool_t<true>
         { };
 
-    struct c_false_t 
+    struct c_false_t
         : c_bool_t<false>
         { };
 

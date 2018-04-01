@@ -16,7 +16,7 @@ namespace utl
     public:
         enum class print_flag
         {
-            ResolveAddress,
+            resolve_address,
         };
         using print_flags = shifted_flags<print_flag>;
 
@@ -24,7 +24,7 @@ namespace utl
         static constexpr size_t max_stack_size = 15;
         static const print_flags& default_print_flag()
         {
-            static const print_flags value({ print_flag::ResolveAddress });
+            static const print_flags value({ print_flag::resolve_address });
             return value;
         };
 
@@ -49,7 +49,7 @@ namespace utl
             print_message(os);
             os << std::endl;
             char** lines = nullptr;
-            if (flags.is_set(print_flag::ResolveAddress))
+            if (flags.is_set(print_flag::resolve_address))
                 lines = backtrace_symbols(stack, stack_size);
             for (int i = 0; i < stack_size; ++i)
             {

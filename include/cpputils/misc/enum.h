@@ -147,10 +147,10 @@ namespace utl
             return (c != e);
         }
 
-        static inline T to_enum(const std::string& str)
+        static inline T to_enum(const std::string& str, bool acceptNumeric)
         {
             T value;
-            return try_to_enum(str, value)
+            return try_to_enum(str, value, acceptNumeric)
                 ? value
                 : default_enum_value_type::value();
         }

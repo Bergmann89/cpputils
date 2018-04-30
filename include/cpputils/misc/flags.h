@@ -13,7 +13,7 @@ namespace utl
         static inline T_base to_base(const T_enum& e)
             { return static_cast<T_base>(e); }
 
-        static inline T_enum from_index(const size_t& index)
+        static inline T_enum from_index(const ssize_t& index)
             { return static_cast<T_enum>(1 << index); }
     };
 
@@ -23,7 +23,7 @@ namespace utl
         static inline T_base to_base(const T_enum& e)
             { return static_cast<T_base>(1 << static_cast<int>(e)); }
 
-        static inline T_enum from_index(const size_t& index)
+        static inline T_enum from_index(const ssize_t& index)
             { return static_cast<T_enum>(index); }
     };
 
@@ -42,10 +42,10 @@ namespace utl
         struct iterator
         {
         private:
-            static constexpr size_t bit_count = 8 * sizeof(base_type);
+            static constexpr ssize_t bit_count = static_cast<ssize_t>(8 * sizeof(base_type));
 
             base_type   _base;
-            size_t      _pos;
+            ssize_t     _pos;
 
             inline void next()
             {
@@ -60,7 +60,7 @@ namespace utl
         public:
             iterator(const base_type& base, bool is_end)
                 : _base(base)
-                , _pos (is_end ? bit_count : 0)
+                , _pos (is_end ? bit_count : -1)
                 { next(); }
 
             inline bool operator == (const iterator& other) const
@@ -112,36 +112,36 @@ namespace utl
             { return iterator(value, true); }
 
     public:
-        base_type operator()() const
+        inline base_type operator()() const
             { return value; }
 
-        operator base_type() const
+        inline operator base_type() const
+            { return static_cast<base_type>(value); }
+
+        inline explicit operator bool() const
             { return static_cast<bool>(value); }
 
-        explicit operator bool() const
-            { return static_cast<bool>(value); }
-
-        bool operator[](enum_type e) const
+        inline bool operator[](enum_type e) const
             { return is_set(e); }
 
     public:
-        flags() :
+        inline flags() :
             value(0)
             { }
 
-        explicit flags(base_type v) :
+        inline explicit flags(base_type v) :
             value(v)
             { }
 
-        flags(enum_type e) :
+        inline flags(enum_type e) :
             value(T_op::to_base(e))
             { }
 
-        flags(const flags& other) :
+        inline flags(const flags& other) :
             value(other.value)
             { }
 
-        flags(std::initializer_list<enum_type> list) :
+        inline flags(std::initializer_list<enum_type> list) :
             flags()
         {
             for (auto& e : list)

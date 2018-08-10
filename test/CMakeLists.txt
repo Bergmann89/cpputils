@@ -1,11 +1,18 @@
+# Initialize ######################################################################################
+
+Include                     ( cotire OPTIONAL )
+Include                     ( pedantic OPTIONAL )
+Include                     ( cmake_tests OPTIONAL )
+
+Set                         ( CMAKE_CXX_STANDARD 17 )
+Set                         ( CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${PEDANTIC_C_FLAGS}" )
+Set                         ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PEDANTIC_CXX_FLAGS}" )
+
 # Project: test_cpputils ##########################################################################
 
 Project                     ( test_cpputils )
 File                        ( GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp )
 Add_Executable              ( test_cpputils EXCLUDE_FROM_ALL ${SOURCE_FILES} )
-If                          ( __COTIRE_INCLUDED )
-    Cotire                      ( test_cpputils )
-EndIf                       ( )
 Target_Link_Libraries       (
                                 test_cpputils
                                 cpputils
@@ -14,22 +21,9 @@ Target_Link_Libraries       (
                                 gmock_main
                                 pthread
                             )
-
-# Build Tests #####################################################################################
-
-If                          ( NOT TARGET build_tests)
-    Add_Custom_Target           ( build_tests )
+If                          ( __COTIRE_INCLUDED )
+    Cotire                      ( test_cpputils )
 EndIf                       ( )
-Add_Dependencies            ( build_tests test_cpputils )
-
-# Run Tests #######################################################################################
-
-If                          ( NOT TARGET tests)
-    Add_Custom_Target           ( tests )
+If                          ( __CMAKE_TESTS_INCLUDED )
+    Add_CMake_Test             ( cpputils test_cpputils )
 EndIf                       ( )
-Add_Custom_Target           ( run_test_cpputils DEPENDS test_cpputils COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_cpputils )
-Add_Dependencies            ( tests run_test_cpputils )
-
-# CTest ###########################################################################################
-
-Add_Test                    ( NAME cpputils COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_cpputils )

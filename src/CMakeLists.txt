@@ -2,7 +2,11 @@
 
 Include                     ( cotire OPTIONAL )
 Include                     ( pedantic OPTIONAL )
+Include                     ( strip_symbols OPTIONAL )
 
+Option                      ( BUILD_SHARED_CPPUTILS "Build cpputils shared library" OFF )
+
+Set                         ( BUILD_SHARED_LIBS ${BUILD_SHARED_CPPUTILS} )
 Set                         ( CMAKE_CXX_STANDARD 17 )
 Set                         ( CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${PEDANTIC_C_FLAGS}" )
 Set                         ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PEDANTIC_CXX_FLAGS}" )
@@ -19,3 +23,6 @@ Target_Include_Directories  (
 If                          ( __COTIRE_INCLUDED )
     Cotire                      ( cpputils )
 EndIf                       ( )
+If                          ( __STRIP_SYMBOLS_INCLUDED )
+    Strip_Symbols               ( cpputils DBG_FILE )
+EndIf                       ()

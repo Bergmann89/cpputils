@@ -40,10 +40,10 @@ namespace mp {
     using decay = __impl::decay_impl<T>;
 
     template<class T>
-    using decay_type = typename __impl::decay_impl<T>::type;
+    using decay_t = typename __impl::decay_impl<T>::type;
 
     template<typename T, typename U>
-    using common_type = __impl::common_type_impl<T, U>;
+    using common_t = __impl::common_type_impl<T, U>;
 
     namespace __impl /* implementation */
     {

@@ -23,6 +23,6 @@ Target_Include_Directories  (
 If                          ( __COTIRE_INCLUDED )
     Cotire                      ( cpputils )
 EndIf                       ( )
-If                          ( __STRIP_SYMBOLS_INCLUDED )
+If                          ( __STRIP_SYMBOLS_INCLUDED AND BUILD_SHARED_LIBS )
     Strip_Symbols               ( cpputils DBG_FILE )
 EndIf                       ()

@@ -107,19 +107,26 @@ namespace utl
                 && value() < other.value();
         }
 
-        inline void operator=(value_type&& t)
-            { _container.reset(new container(std::forward<value_type>(t))); }
+        inline decltype(auto) operator=(value_type&& t)
+        {
+            _container.reset(new container(std::forward<value_type>(t)));
+            return *this;
+        }
 
-        inline void operator=(const nullable& other)
+        inline decltype(auto) operator=(const nullable& other)
         {
             if (other.has_value())
                 *this = other.value();
             else
                 reset();
+            return *this;
         }
 
-        inline void operator=(nullable&& other)
-            { _container = std::move(other._container); }
+        inline decltype(auto) operator=(nullable&& other)
+        {
+            _container = std::move(other._container);
+            return *this;
+        }
 
 
 

@@ -18,12 +18,12 @@ namespace mp {
 
         template<typename T, template <typename...> class T_template>
         struct is_specialization_of_impl
-            : c_false_t
+            : public c_false_t
             { };
 
         template<template <typename...> class T_template, typename... Ts>
         struct is_specialization_of_impl<T_template<Ts...>, T_template>
-            : c_true_t
+            : public c_true_t
             { };
 
     }
@@ -71,6 +71,11 @@ namespace mp {
     template<typename T>
     struct is_arithmetic :
         c_bool_t<std::is_arithmetic<T>::value>
+        { };
+
+    template<typename T>
+    struct is_integral :
+        c_bool_t<std::is_integral<T>::value>
         { };
 
     template<typename T>

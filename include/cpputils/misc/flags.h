@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 #include <limits>
 #include <cassert>
 #include <type_traits>

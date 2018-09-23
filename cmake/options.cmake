@@ -1,0 +1,1 @@
+Option                      ( CPPUTILS_BUILD_SHARED "Build cpputils shared library" OFF )

@@ -15,14 +15,12 @@ Set                         ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PEDANTIC_CXX
 Project                     ( test_cpputils )
 File                        ( GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp )
 Add_Executable              ( test_cpputils EXCLUDE_FROM_ALL ${SOURCE_FILES} )
-Target_Link_Libraries       (
-                                test_cpputils
-                                cpputils
-                                gtest
-                                gmock
-                                gmock_main
-                                pthread
-                            )
+Target_Link_Libraries       ( test_cpputils
+                              cpputils
+                              gtest
+                              gmock
+                              gmock_main
+                              pthread )
 If                          ( __COTIRE_INCLUDED )
     Cotire                      ( test_cpputils )
 EndIf                       ( )

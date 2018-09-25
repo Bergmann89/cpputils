@@ -13,13 +13,25 @@ Set                         ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PEDANTIC_CXX
 
 # Project: cpputils ###############################################################################
 
+# Build
 Project                     ( cpputils VERSION 1.0.0.0 LANGUAGES CXX )
+Set                         ( CPPUTILS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 File                        ( GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp )
 Add_Library                 ( cpputils ${SOURCE_FILES} )
-Target_Include_Directories  (
-                                cpputils
-                                PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include
-                            )
+Target_Include_Directories  ( cpputils
+                              PUBLIC ${CPPUTILS_INCLUDE_DIR} )
+
+# Install
+If                          ( BUILD_SHARED_LIBS OR CPPUTILS_INSTALL_DEV_FILES )
+    Install                     ( TARGETS cpputils DESTINATION lib )
+EndIf                       ( )
+
+If                          ( CPPUTILS_INSTALL_DEV_FILES )
+    Install                     ( DIRECTORY ${CPPUTILS_INCLUDE_DIR}/cpputils DESTINATION include )
+    Install                     ( DIRECTORY ${CPPUTILS_INCLUDE_DIR}/nlohmann DESTINATION include )
+EndIf                       ( )
+
+# Optimize
 If                          ( __COTIRE_INCLUDED )
     Cotire                      ( cpputils )
 EndIf                       ( )

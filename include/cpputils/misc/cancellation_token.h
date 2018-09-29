@@ -13,7 +13,7 @@ namespace utl
             { return "task was canceled!"; }
     };
 
-    template<class T>
+    template<typename T>
     struct data_cancellation_exception
         : public cancellation_exception
     {
@@ -23,6 +23,11 @@ namespace utl
             : data(d)
             { }
     };
+
+    template<>
+    struct data_cancellation_exception<void>
+        : public cancellation_exception
+        { };
 
     struct cancellation_token
     {
@@ -51,7 +56,7 @@ namespace utl
     };
 
 
-    template<class T>
+    template<typename T>
     struct cancellation_source
         : public cancellation_token
     {

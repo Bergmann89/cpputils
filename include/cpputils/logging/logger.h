@@ -39,7 +39,7 @@ namespace logging {
                 { _logger.log(_data); }
 
         public:
-            static inline helper create(logger& logger, log_level level, const char* file, int line, void* sender, const std::string& name, std::string message)
+            static inline helper create(logger& logger, log_level level, const char* file, int line, const void* sender, const std::string& name, std::string message)
             {
                 using namespace ::utl::logging;
                 data_ptr_s ret(new data());
@@ -66,27 +66,27 @@ namespace logging {
         virtual bool                is_enabled  (log_level level) const;
         virtual void                log         (data_ptr_s data) const;
 
-        template<class Sender, class... Args>
-        inline logger::helper make_log_helper(log_level level, const char* file, int line, Sender* sender, std::string message, Args... args)
+        template<class T_sender, class... Args>
+        inline logger::helper make_log_helper(log_level level, const char* file, int line, const T_sender* sender, std::string message, Args... args)
         {
             std::unique_ptr<char, decltype(&free)> buff(static_cast<char*>(malloc(0x8000)), &free);
             auto len = snprintf(buff.get(), 10240, message.c_str(), args...);
             if (len < 0)
                 throw utl::error_exception(errno);
-            return helper::create(*this, level, file, line, static_cast<void*>(sender), name(), std::string(buff.get(), len));
+            return helper::create(*this, level, file, line, static_cast<const void*>(sender), name(), std::string(buff.get(), len));
         }
 
         template<class... Args>
         inline logger::helper make_log_helper(log_level level, const char* file, int line, std::string message, Args... args)
              { return make_log_helper<void, Args...>(level, file, line, nullptr, message, args...); }
 
-        template<class Sender>
-        inline logger::helper make_log_helper(log_level level, const char* file, int line, Sender* sender, std::string message)
-            { return helper::create(*this, level, file, line, static_cast<void*>(sender), name(), message); }
+        template<class T_sender>
+        inline logger::helper make_log_helper(log_level level, const char* file, int line, const T_sender* sender, std::string message)
+            { return helper::create(*this, level, file, line, static_cast<const void*>(sender), name(), message); }
 
-        template<class Sender>
-        inline logger::helper make_log_helper(log_level level, const char* file, int line, Sender* sender)
-            { return make_log_helper<void>(level, file, line, static_cast<void*>(sender), std::string()); }
+        template<class T_sender>
+        inline logger::helper make_log_helper(log_level level, const char* file, int line, const T_sender* sender)
+            { return make_log_helper<void>(level, file, line, static_cast<const void*>(sender), std::string()); }
 
         inline logger::helper make_log_helper(log_level level, const char* file, int line, std::string message)
             { return make_log_helper<void>(level, file, line, nullptr, message); }

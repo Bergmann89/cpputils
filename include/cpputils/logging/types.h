@@ -18,7 +18,7 @@ namespace logging {
     {
         log_level                               level;
         std::chrono::steady_clock::time_point   time;
-        void*                                   sender;
+        const void*                             sender;
         std::thread::id                         thread;
         const char*                             file;
         int                                     line;

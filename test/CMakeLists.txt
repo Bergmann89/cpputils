@@ -25,5 +25,6 @@ If                          ( __COTIRE_INCLUDED )
     Cotire                      ( test_cpputils )
 EndIf                       ( )
 If                          ( __CMAKE_TESTS_INCLUDED )
-    Add_CMake_Test             ( cpputils test_cpputils )
+    Add_CMake_Test             ( NAME cpputils
+                                 TARGET test_cpputils )
 EndIf                       ( )

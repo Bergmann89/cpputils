@@ -354,7 +354,7 @@ inline utl::handle::handle(const handle& other) :
 inline bool
 utl::handle::from_string(const std::string& str, handle& handle)
 {
-    memset(&handle, 0, sizeof(handle));
+    handle = utl::handle();
     const char *c = str.c_str();
     const char *e = c + str.size();
     uint8_t* p = reinterpret_cast<uint8_t*>(&handle);

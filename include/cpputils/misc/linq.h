@@ -62,7 +62,7 @@ namespace linq {
 
             predicate_type predicate;
 
-            inline bool operator()(const value_type& l, const value_type& r)
+            inline bool operator()(const value_type& l, const value_type& r) const
                 { return predicate(*l, *r); }
 
             inline op_wrapper_less(const predicate_type& lp) :
@@ -166,6 +166,7 @@ namespace linq {
                         {
                             ++current;
                         }
+                        /* fall through */
 
                         case state_type::initialize:
                         {
@@ -278,7 +279,7 @@ namespace linq {
             {
                 bool operator()(
                     const keys_value_type& l,
-                    const keys_value_type& r)
+                    const keys_value_type& r) const
                     { return *l.first < *r.first; }
             };
 
@@ -1244,7 +1245,7 @@ namespace linq {
                 inline T& operator*()
                     { return *value; }
 
-                inline operator bool()
+                inline operator bool() const
                     { return static_cast<bool>(value); }
 
                 inline cache()
@@ -1262,7 +1263,7 @@ namespace linq {
                 inline T& operator*()
                     { return *value; }
 
-                inline operator bool()
+                inline operator bool() const
                     { return static_cast<bool>(value); }
 
                 inline cache() :

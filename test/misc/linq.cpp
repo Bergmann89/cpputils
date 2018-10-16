@@ -258,7 +258,7 @@ TEST(LinqTest, distinct)
 {
     std::vector<test_data> data({ test_data(1), test_data(2), test_data(3), test_data(1), test_data(2), test_data(4) });
     auto range = from_container(data)
-        >>  distinct([](test_data& l, test_data& r){
+        >>  distinct([](const test_data& l, const test_data& r){
                 return l.value < r.value;
             });
     ASSERT_TRUE (range.next());
